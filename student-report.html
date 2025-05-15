@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Report – Flourish & Fly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 40px;
+      min-height: 100vh;
+    }
+
+    /* Centered student name styling */
+    #student-name {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #4b0082;
+      margin-bottom: 30px;
+      text-align: center;
+      font-family: 'Brush Script MT', cursive;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      max-width: 900px;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    thead {
+      background-color: #9370db;
+      color: white;
+      font-weight: bold;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+    }
+
+    tbody tr:hover {
+      background-color: #f5f0ff;
+    }
+
+    /* Clickable links look */
+    .clickable {
+      color: #000000;
+     
+      cursor: pointer;
+    }
+
+    /* Prevent color changes on hover, visited, or active */
+    .clickable:hover,
+    .clickable:visited,
+    .clickable:active {
+      color: #cc0096;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="student-name">Student Name</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Domain</th>
+        <th>Kindergarten</th>
+        <th>1st Grade</th>
+        <th>2nd Grade</th>
+        <th>3rd Grade</th>
+        <th>4th Grade</th>
+        <th>5th Grade</th>
+      </tr>
+    </thead>
+    <tbody id="report-body">
+      <!-- Rows injected by JS -->
+    </tbody>
+  </table>
+
+  <script src="student-report.js"></script>
+</body>
+</html>

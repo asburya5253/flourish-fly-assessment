@@ -1,0 +1,154 @@
+/* General reset & base styles */
+body {
+  display: flex;
+  flex-direction: column; /* stack children vertically */
+  justify-content: flex-start; /* align from top */
+  align-items: center; /* center horizontally */
+  height: 100vh;
+  margin: 0;
+  padding: 40px;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #f0f4f8;
+}
+
+  
+  
+  /* Shared container style */
+  .container, .assessment-container {
+    background-color: #fff;
+    padding: 2rem 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    text-align: center;
+  }
+  
+  /* Login container specific */
+  .container {
+    max-width: 400px;
+    width: 90%;
+  }
+  
+  /* Login form layout */
+  form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  input[type="text"] {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+  
+  button {
+    padding: 0.75rem;
+    background-color: #0077cc;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s;
+  }
+  
+  button:hover {
+    background-color: #005fa3;
+  }
+  
+  /* Error message */
+  #error-message {
+    color: red;
+    font-size: 0.9rem;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  /* Headings */
+  h1, h2 {
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  /* ------------------ Assessment Styles ------------------ */
+  
+  body.assessment-mode {
+    background-color: #f0f0ff; /* distinct bg for assessment */
+  }
+  
+  .assessment-container {
+    background-color: #e6e6fa; /* light purple */
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 80%;
+    max-width: 600px;
+    text-align: center;
+  }
+  
+  #skillTitle {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: #444;
+    font-weight: bold;
+  }
+  
+  #question {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #dcdcdc;
+  }
+  
+  #choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  #choices button {
+    background-color: #708090; /* slate gray */
+    color: white;
+    padding: 15px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  #choices button:hover {
+    background-color: #5a6b7a;
+  }
+  
+  #questionCount {
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  /* Progress bar */
+  .progress-bar {
+    width: 100%;
+    background-color: #ddd;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  
+  #progressFill {
+    height: 100%;
+    width: 0%;
+    background-color: #9370db; /* medium purple */
+    transition: width 0.3s ease;
+  }
+  

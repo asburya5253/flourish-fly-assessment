@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Dashboard – Flourish & Fly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+   body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f0f4f8;
+  margin: 0;
+  padding: 0;          /* remove padding */
+  min-height: 100vh;
+  display: block;      /* remove any flex centering */
+}
+
+h1 {
+  text-align: center;
+  margin: 20px 0 40px 0;
+  color: #4b0082;
+  font-family: 'Brush Script MT', cursive;
+  font-size: 3rem;
+}
+
+table {
+  max-width: 900px;
+  margin: 0 auto;     /* center horizontally */
+  background: white;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  border-collapse: collapse;
+}
+
+    thead {
+      background-color: #9370db;
+      color: white;
+      font-weight: bold;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tbody tr:hover {
+      background-color: #f5f0ff;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    a.student-link {
+      color: #0077cc;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    a.student-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Teacher Dashboard</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Operations & Algebraic Thinking (OA)</th>
+        <th>Number & Base Ten (NBT)</th>
+        <th>Measurement & Data (MD)</th>
+        <th>Geometry (G)</th>
+      </tr>
+    </thead>
+    <tbody id="student-table-body">
+      <!-- Rows will be populated by JS -->
+    </tbody>
+  </table>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Login – Flourish & Fly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f4f8;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 2rem 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 1.5rem;
+    }
+
+    .switch-mode {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .switch-mode a {
+      color: #0077cc;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .action-buttons button {
+      flex: 1;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #login-error {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Teacher Login</h2>
+    <form id="teacher-login-form">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+
+      <div class="action-buttons">
+        <button type="submit">Log In</button>
+        <button onclick="window.location.href='teacher-signup.html'">Sign Up</button>
+
+      </div>
+
+      <p id="login-error" class="hidden" style="color: red;">Invalid credentials. Try again.</p>
+    </form>
+
+    <div class="switch-mode">
+      Not a teacher? <a href="home.html">Go back</a>
+    </div>
+  </div>
+
+  <script src="teacher-login.js"></script>
+</body>
+</html>
