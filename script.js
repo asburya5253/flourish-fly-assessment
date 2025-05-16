@@ -1,6 +1,5 @@
-const publicSpreadsheetKey = '1FpITDwLRyfHkOObMrQpmXgFhqaHJUlKfQtavLnJzFfI';
-
-const sheetName = 'G1_OA'; // The tab/sheet name you want to load
+const publicSpreadsheetKey = "1dA_WEldvo9bBA2IQ6H9N4fSSZZCMBpAu";
+const sheetName = "G1_OA"; // Update this if you use a different tab name
 
 let questions = [];
 let currentQuestionIndex = 0;
@@ -13,13 +12,13 @@ function init() {
     simpleSheet: false,
     wanted: [sheetName],
     callback: function (data) {
-      if (!data || !data[sheetName]) {
-        console.error("❌ Sheet not found or data error. Tab name used:", sheetName);
-        document.getElementById("question").innerText = "Error loading questions.";
+      const sheetData = data[sheetName]?.elements;
+      if (!sheetData || sheetData.length === 0) {
+        document.getElementById("question").innerText = "❌ No data found or sheet is empty.";
         return;
       }
 
-      questions = data[sheetName].elements
+      questions = sheetData
         .filter(row => row.Question && row.Answer)
         .map(row => ({
           level: parseInt(row.Level),
@@ -29,22 +28,19 @@ function init() {
           answer: row.Answer
         }));
 
-      if (questions.length === 0) {
-        document.getElementById("question").innerText = "⚠️ No valid questions found.";
-        return;
-      }
-
       displayQuestion();
     },
     error: function (err) {
-      console.error('Tabletop error:', err);
-      document.getElementById("question").innerText = "Error loading questions.";
+      console.error("Tabletop Error:", err);
+      document.getElementById("question").innerText = "❌ Failed to load questions.";
     }
   });
 }
 
 function displayQuestion() {
   const question = questions[currentQuestionIndex];
+  if (!question) return;
+
   document.getElementById("skillTitle").innerText = `Skill: ${question.skill}`;
   document.getElementById("question").innerText = question.question;
 
@@ -64,14 +60,14 @@ function displayQuestion() {
 
 function handleAnswer(choice) {
   const question = questions[currentQuestionIndex];
-
   if (choice === question.answer) {
     score++;
   }
 
   questionCount++;
-  if (questionCount < questions.length) {
-    currentQuestionIndex++;
+  currentQuestionIndex++;
+
+  if (currentQuestionIndex < questions.length) {
     displayQuestion();
   } else {
     showResults();
@@ -84,11 +80,10 @@ function updateProgressBar() {
 }
 
 function showResults() {
-  const assessmentContainer = document.querySelector(".assessment-container");
-  assessmentContainer.innerHTML = `
+  document.querySelector(".assessment-container").innerHTML = `
     <h2>Assessment Complete!</h2>
     <p>Your score: ${score} out of ${questions.length}</p>
   `;
 }
 
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener("DOMContentLoaded", init);
