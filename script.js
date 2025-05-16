@@ -1,5 +1,7 @@
-const publicSpreadsheetKey = "1dA_WEldvo9bBA2IQ6H9N4fSSZZCMBpAu";
-const sheetName = "G1_OA"; // Update this if you use a different tab name
+const spreadsheetId = "1dA_WEldvo9bBA2IQ6H9N4fSSZZCMBpAu";
+const apiKey = "AIzaSyBykPFEhJCF49uKgkAQq3R2Znz61dgleYw";
+const sheetName = "G1_OA"; // must match your tab name exactly
+const range = `${sheetName}!A2:H`; // skip header row
 
 let questions = [];
 let currentQuestionIndex = 0;
@@ -7,34 +9,30 @@ let score = 0;
 let questionCount = 0;
 
 function init() {
-  Tabletop.init({
-    key: publicSpreadsheetKey,
-    simpleSheet: false,
-    wanted: [sheetName],
-    callback: function (data) {
-      const sheetData = data[sheetName]?.elements;
-      if (!sheetData || sheetData.length === 0) {
-        document.getElementById("question").innerText = "❌ No data found or sheet is empty.";
+  fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (!data.values || data.values.length === 0) {
+        document.getElementById("question").innerText = "❌ No data found.";
         return;
       }
 
-      questions = sheetData
-        .filter(row => row.Question && row.Answer)
+      questions = data.values
+        .filter(row => row[2] && row[7]) // Question and Answer must exist
         .map(row => ({
-          level: parseInt(row.Level),
-          skill: row.Standard,
-          question: row.Question,
-          choices: [row["Choice A"], row["Choice B"], row["Choice C"], row["Choice D"]],
-          answer: row.Answer
+          level: parseInt(row[0]), // Level
+          skill: row[1],           // Standard
+          question: row[2],        // Question
+          choices: [row[3], row[4], row[5], row[6]], // A, B, C, D
+          answer: row[7]           // Answer
         }));
 
       displayQuestion();
-    },
-    error: function (err) {
-      console.error("Tabletop Error:", err);
+    })
+    .catch((error) => {
+      console.error("Google Sheets API Error:", error);
       document.getElementById("question").innerText = "❌ Failed to load questions.";
-    }
-  });
+    });
 }
 
 function displayQuestion() {
