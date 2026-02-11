@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Domain Report – Flourish & Fly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 40px;
+      min-height: 100vh;
+    }
+
+    #page-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #4b0082;
+      margin-bottom: 30px;
+      text-align: center;
+      font-family: 'Brush Script MT', cursive;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      max-width: 900px;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    thead {
+      background-color: #9370db;
+      color: white;
+      font-weight: bold;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tbody tr:hover {
+      background-color: #f5f0ff;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #0077cc;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="page-title">Domain Report</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Skill</th>
+        <th>Kindergarten</th>
+        <th>1st Grade</th>
+        <th>2nd Grade</th>
+        <th>3rd Grade</th>
+        <th>4th Grade</th>
+        <th>5th Grade</th>
+      </tr>
+    </thead>
+    <tbody id="report-body">
+      <!-- Rows injected by JS -->
+    </tbody>
+  </table>
+
+  <a class="back-link" href="javascript:history.back()">Back to Student Report</a>
+
+  <script src="domain-report.js"></script>
+</body>
+</html>
