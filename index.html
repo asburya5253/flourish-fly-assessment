@@ -45,9 +45,44 @@
     .button-row button:hover {
       background-color: #6a5acd;
     }
+
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: #4B0082;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 12px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 100;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    nav a:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
   </style>
 </head>
 <body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="student-login.html">Student Login</a>
+    <a href="teacher-login.html">Teacher Login</a>
+    <a href="teacher-signup.html">Teacher Sign Up</a>
+    <a href="teacher-dashboard.html">Dashboard</a>
+  </nav>
 
   <h1>Flourish & Fly Math Diagnostic</h1>
 
