@@ -131,7 +131,7 @@ function showResults() {
     <p style="margin-top: 20px; color: #555;">${
       pct >= 70 ? "Great job!" : pct >= 50 ? "Keep practicing!" : "Let's review this skill together."
     }</p>
-    <button onclick="location.href='home.html'" style="margin-top: 20px;">Back to Home</button>
+    <button onclick="location.href='index.html'" style="margin-top: 20px;">Back to Home</button>
   `;
 }
 

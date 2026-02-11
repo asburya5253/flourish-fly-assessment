@@ -2,20 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Student Login</title>
+  <title>Flourish & Fly Math Diagnostic</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5fb;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      font-family: 'copperplate';
+      font-size: 3rem;
+      color: #4B0082;
+      margin-bottom: 60px;
+    }
+
+
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 60px;
+    }
+
+    .button-row button {
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background-color: #9370db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .button-row button:hover {
+      background-color: #6a5acd;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Enter Access Code</h2>
-    <form id="login-form">
-      <input type="text" id="access-code" placeholder="Enter your code" required />
-      <button type="submit">Login</button>
-    </form>
-    <p id="error-message" class="hidden">Invalid access code. Please try again.</p>
+
+  <h1>Flourish & Fly Math Diagnostic</h1>
+
+  <div class="button-row">
+    <button onclick="location.href='student-login.html'">Student</button>
+    <button onclick="location.href='teacher-login.html'">Teacher</button>
   </div>
 
-  <script src="login.js"></script>
 
 </body>
 </html>
