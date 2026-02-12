@@ -158,8 +158,50 @@ answerInput.addEventListener("keydown", function (e) {
 
 // ── Results screen ──────────────────────────────────────────
 
+function getMasteryLevel(score, bank) {
+  var thresholds = bank.mastery || { mastered: 8, review: 6 };
+  if (score >= thresholds.mastered) return { label: "Mastered", color: "#4CAF50", bg: "#e8f5e9" };
+  if (score >= thresholds.review)   return { label: "Needs Review", color: "#ff9800", bg: "#fff3e0" };
+  return { label: "Full Reteach", color: "#e74c3c", bg: "#fdecea" };
+}
+
+function buildSkillBreakdown() {
+  // Group answers by skill and show correct/incorrect per sub-skill
+  var skills = [];
+  var seen = {};
+  answers.forEach(function (a) {
+    if (!seen[a.skill]) {
+      seen[a.skill] = { skill: a.skill, correct: 0, total: 0 };
+      skills.push(seen[a.skill]);
+    }
+    seen[a.skill].total++;
+    if (a.correct) seen[a.skill].correct++;
+  });
+
+  var html = '<table style="width:100%; border-collapse:collapse; margin-top:16px; text-align:left;">';
+  html += '<thead><tr style="border-bottom:2px solid #9370db;">';
+  html += '<th style="padding:8px; color:#4b0082;">Sub-Skill</th>';
+  html += '<th style="padding:8px; text-align:center; color:#4b0082;">Result</th>';
+  html += '</tr></thead><tbody>';
+
+  skills.forEach(function (s) {
+    var allCorrect = (s.correct === s.total);
+    var icon = allCorrect ? "&#10003;" : "&#10007;";
+    var color = allCorrect ? "#4CAF50" : "#e74c3c";
+    html += "<tr style='border-bottom:1px solid #ddd;'>";
+    html += "<td style='padding:8px;'>" + s.skill + "</td>";
+    html += "<td style='padding:8px; text-align:center; font-weight:700; color:" + color + ";'>" + s.correct + "/" + s.total + " " + icon + "</td>";
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  return html;
+}
+
 function showResults() {
   var pct = Math.round((score / questions.length) * 100);
+  var bank = questionBank[currentAssessment];
+  var mastery = getMasteryLevel(score, bank);
 
   // Save results to localStorage
   var studentId = localStorage.getItem("studentId") || "unknown";
@@ -169,6 +211,7 @@ function showResults() {
     score: score,
     total: questions.length,
     percent: pct,
+    mastery: mastery.label,
     answers: answers,
     date: new Date().toISOString()
   };
@@ -180,15 +223,17 @@ function showResults() {
   // Update progress bar to 100%
   progressFill.style.width = "100%";
 
-  var barColor = pct >= 70 ? "#4CAF50" : (pct >= 50 ? "#ff9800" : "#e74c3c");
-  var msg = pct >= 70 ? "Great job!" : (pct >= 50 ? "Keep practicing!" : "Let's review this skill together.");
-
-  document.querySelector(".assessment-container").innerHTML =
+  var container = document.querySelector(".assessment-container");
+  container.innerHTML =
     "<h2>Assessment Complete!</h2>" +
-    '<p class="score-display">You scored <strong>' + score + "</strong> out of <strong>" + questions.length + "</strong> (" + pct + "%)</p>" +
-    '<div class="progress-bar"><div style="height:100%; width:' + pct + "%; background-color:" + barColor + '; border-radius:6px;"></div></div>' +
-    '<p style="margin-top:20px; color:#555;">' + msg + "</p>" +
-    '<button onclick="location.href=\'student-login.html\'" style="margin-top:20px;">Back to Login</button>';
+    '<p class="score-display">You scored <strong>' + score + "</strong> out of <strong>" + questions.length + "</strong></p>" +
+    '<div style="display:inline-block; padding:10px 24px; border-radius:8px; font-size:1.2rem; font-weight:700; color:' + mastery.color + '; background:' + mastery.bg + '; border:2px solid ' + mastery.color + '; margin:12px 0;">' + mastery.label + "</div>" +
+    '<div class="progress-bar" style="margin-top:16px;"><div style="height:100%; width:' + pct + "%; background-color:" + mastery.color + '; border-radius:6px;"></div></div>' +
+    '<div style="text-align:left; margin-top:20px;">' +
+    '<h3 style="color:#4b0082; margin-bottom:4px;">Sub-Skill Breakdown</h3>' +
+    buildSkillBreakdown() +
+    "</div>" +
+    '<button onclick="location.href=\'student-login.html\'" style="margin-top:24px;">Back to Login</button>';
 }
 
 // ── Start ───────────────────────────────────────────────────
