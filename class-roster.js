@@ -263,6 +263,12 @@ function handleManualAdd() {
     return;
   }
 
+  if (!birthday || !/^\d{2}\/\d{2}$/.test(birthday)) {
+    status.textContent = "Please enter a birthday in MM/DD format.";
+    status.style.color = "red";
+    return;
+  }
+
   addStudents([{ firstName: firstName, lastName: lastName, gradeLevel: gradeLevel, mathLevel: mathLevel, birthday: birthday, classPeriod: classPeriod }]);
 
   document.getElementById("m-first-name").value = "";
