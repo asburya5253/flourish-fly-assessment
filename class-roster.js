@@ -12,8 +12,23 @@ const gradeLabels = {
 const gradeLevelOptions = ["", "K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 const mathLevelOptions = ["", "K", "1", "2", "3", "4", "5", "6", "7", "8"];
 
-// Track which row index is currently in edit mode (-1 = none)
 var editingRow = -1;
+
+// ── Login ID generation ─────────────────────────────────────
+
+function generateLoginId(firstName, lastName, existingIds) {
+  var base = (firstName.slice(0, 3) + lastName.slice(0, 3)).toLowerCase();
+  if (existingIds.indexOf(base) === -1) return base;
+  var num = 1;
+  while (existingIds.indexOf(base + num) !== -1) {
+    num++;
+  }
+  return base + num;
+}
+
+function getAllLoginIds(roster) {
+  return roster.map(function (s) { return s.loginId || ""; });
+}
 
 // ── Roster helpers ──────────────────────────────────────────
 
@@ -29,15 +44,23 @@ function saveRoster(roster) {
 function syncStudentRoster(roster) {
   var map = {};
   roster.forEach(function (s) {
-    var id = (s.firstName + "_" + s.lastName).toLowerCase().replace(/\s+/g, "_");
-    map[id] = s.firstName + " " + s.lastName;
+    if (s.loginId) {
+      map[s.loginId] = s.firstName + " " + s.lastName;
+    }
   });
   localStorage.setItem(STUDENT_ROSTER_KEY, JSON.stringify(map));
 }
 
 function addStudents(students) {
   var roster = getRoster();
-  students.forEach(function (s) { roster.push(s); });
+  var existingIds = getAllLoginIds(roster);
+
+  students.forEach(function (s) {
+    s.loginId = generateLoginId(s.firstName, s.lastName, existingIds);
+    existingIds.push(s.loginId);
+    roster.push(s);
+  });
+
   saveRoster(roster);
 }
 
@@ -103,6 +126,13 @@ function renderRoster() {
   roster.forEach(function (s, i) {
     var tr = document.createElement("tr");
     var isEditing = (i === editingRow);
+
+    // Login ID
+    var tdId = document.createElement("td");
+    tdId.textContent = s.loginId || "—";
+    tdId.style.fontFamily = "monospace";
+    tdId.style.fontWeight = "600";
+    tr.appendChild(tdId);
 
     // First name
     var tdFirst = document.createElement("td");
@@ -183,7 +213,6 @@ function saveRow(index) {
   var row = tbody.children[index];
   if (!row) return;
 
-  // Read values from the dropdowns/inputs in the row
   var selects = row.querySelectorAll("select");
   selects.forEach(function (sel) {
     var field = sel.getAttribute("data-field");
