@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Class Roster – Flourish & Fly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      padding-top: 60px;
+      min-height: 100vh;
+      display: block;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0 30px 0;
+      color: #4b0082;
+      font-family: 'Brush Script MT', cursive;
+      font-size: 3rem;
+    }
+
+    .roster-wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* --- Panels --- */
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      padding: 24px 30px;
+      margin-bottom: 24px;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #4b0082;
+      font-size: 1.25rem;
+    }
+
+    /* --- Upload Section --- */
+    .upload-area {
+      border: 2px dashed #9370db;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .upload-area:hover {
+      background-color: #f5f0ff;
+    }
+
+    .upload-area p {
+      margin: 8px 0 0;
+      font-size: 0.9rem;
+      color: #999;
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    #upload-status {
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+
+    .status-success { color: green; }
+    .status-error { color: red; }
+
+    /* --- Manual Entry Form --- */
+    .manual-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .manual-form .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .manual-form label {
+      font-size: 0.8rem;
+      color: #555;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .manual-form input,
+    .manual-form select {
+      padding: 0.6rem 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    .manual-form .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .btn-add {
+      grid-column: 1 / -1;
+      padding: 0.7rem;
+      background-color: #4b0082;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .btn-add:hover {
+      background-color: #3a006b;
+    }
+
+    #manual-status {
+      grid-column: 1 / -1;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    /* --- Roster Table --- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background-color: #9370db;
+      color: white;
+    }
+
+    th, td {
+      padding: 10px 14px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tbody tr:hover {
+      background-color: #f5f0ff;
+    }
+
+    .btn-remove {
+      background: #cc3333;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn-remove:hover {
+      background: #aa1111;
+    }
+
+    .btn-clear {
+      margin-top: 16px;
+      padding: 8px 20px;
+      background-color: #cc3333;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-clear:hover {
+      background-color: #aa1111;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: #999;
+      padding: 24px;
+    }
+
+    .roster-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .roster-count {
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="student-login.html">Student Login</a>
+    <a href="teacher-login.html">Teacher Login</a>
+    <a href="teacher-signup.html">Teacher Sign Up</a>
+    <a href="teacher-dashboard.html">Dashboard</a>
+    <a href="class-roster.html">Class Roster</a>
+  </nav>
+
+  <h1>Class Roster</h1>
+
+  <div class="roster-wrapper">
+
+    <!-- Upload Spreadsheet -->
+    <div class="panel">
+      <h2>Upload Spreadsheet</h2>
+      <div class="upload-area" id="upload-area">
+        <strong>Click to upload a CSV file</strong>
+        <p>Columns: First Name, Last Name, Grade Level, Math Level, Class Period (optional)</p>
+        <input type="file" id="file-input" accept=".csv" />
+      </div>
+      <div id="upload-status"></div>
+    </div>
+
+    <!-- Manual Entry -->
+    <div class="panel">
+      <h2>Add Student Manually</h2>
+      <div class="manual-form" id="manual-form">
+        <div class="form-group">
+          <label for="m-first-name">First Name</label>
+          <input type="text" id="m-first-name" placeholder="First Name" />
+        </div>
+        <div class="form-group">
+          <label for="m-last-name">Last Name</label>
+          <input type="text" id="m-last-name" placeholder="Last Name" />
+        </div>
+        <div class="form-group">
+          <label for="m-grade-level">Assigned Grade Level</label>
+          <select id="m-grade-level">
+            <option value="" disabled selected>Select Grade</option>
+            <option value="K">Kindergarten</option>
+            <option value="1">1st Grade</option>
+            <option value="2">2nd Grade</option>
+            <option value="3">3rd Grade</option>
+            <option value="4">4th Grade</option>
+            <option value="5">5th Grade</option>
+            <option value="6">6th Grade</option>
+            <option value="7">7th Grade</option>
+            <option value="8">8th Grade</option>
+            <option value="9">9th Grade</option>
+            <option value="10">10th Grade</option>
+            <option value="11">11th Grade</option>
+            <option value="12">12th Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="m-math-level">Estimated Math Level</label>
+          <select id="m-math-level">
+            <option value="" disabled selected>Select Level</option>
+            <option value="K">Kindergarten</option>
+            <option value="1">1st Grade</option>
+            <option value="2">2nd Grade</option>
+            <option value="3">3rd Grade</option>
+            <option value="4">4th Grade</option>
+            <option value="5">5th Grade</option>
+            <option value="6">6th Grade</option>
+            <option value="7">7th Grade</option>
+            <option value="8">8th Grade</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label for="m-class-period">Class Period / Class Name (optional)</label>
+          <input type="text" id="m-class-period" placeholder="e.g. Period 3 or Mrs. Smith's Homeroom" />
+        </div>
+        <p id="manual-status"></p>
+        <button class="btn-add" id="btn-add-student">Add Student</button>
+      </div>
+    </div>
+
+    <!-- Current Roster -->
+    <div class="panel">
+      <div class="roster-header">
+        <h2>Current Roster</h2>
+        <span class="roster-count" id="roster-count"></span>
+      </div>
+      <table id="roster-table">
+        <thead>
+          <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Grade Level</th>
+            <th>Math Level</th>
+            <th>Class / Period</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="roster-body">
+        </tbody>
+      </table>
+      <div id="empty-roster" class="empty-msg">No students added yet.</div>
+      <button class="btn-clear hidden" id="btn-clear-all">Clear Entire Roster</button>
+    </div>
+
+  </div>
+
+  <script src="class-roster.js"></script>
+</body>
+</html>
