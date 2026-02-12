@@ -3,8 +3,199 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Assessment</title>
+  <title>Student Assessment – Flourish & Fly</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f0ff;
+      margin: 0;
+      padding: 0;
+      padding-top: 60px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .assessment-container {
+      background-color: #e6e6fa;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      width: 80%;
+      max-width: 560px;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    #skillTitle {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    #assessmentTitle {
+      font-size: 1.5rem;
+      color: #4b0082;
+      margin: 0 0 24px 0;
+    }
+
+    /* ── Problem display ─────────────────────────── */
+
+    .problem-area {
+      background: white;
+      border-radius: 12px;
+      border: 2px solid #dcdcdc;
+      padding: 30px 20px;
+      margin-bottom: 24px;
+      min-height: 120px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Horizontal: 3 + 6 = ___ */
+    .problem-horizontal {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 2px;
+    }
+
+    .problem-horizontal .blank {
+      display: inline-block;
+      width: 100px;
+      border-bottom: 3px solid #4b0082;
+      text-align: center;
+      margin-left: 6px;
+    }
+
+    /* Vertical stacked problem */
+    .problem-vertical {
+      display: inline-block;
+      text-align: right;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #333;
+      font-family: 'Courier New', monospace;
+    }
+
+    .problem-vertical .num-row {
+      display: block;
+      padding-right: 4px;
+    }
+
+    .problem-vertical .op-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .problem-vertical .op-row .op-sign {
+      margin-right: 8px;
+      color: #4b0082;
+    }
+
+    .problem-vertical .divider {
+      border: none;
+      border-top: 3px solid #333;
+      margin: 6px 0 0 0;
+    }
+
+    /* ── Answer input ────────────────────────────── */
+
+    .answer-area {
+      margin-bottom: 20px;
+    }
+
+    .answer-area input {
+      font-size: 1.6rem;
+      padding: 10px 16px;
+      border: 2px solid #9370db;
+      border-radius: 8px;
+      text-align: center;
+      width: 180px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .answer-area input:focus {
+      border-color: #4b0082;
+    }
+
+    .answer-area input.correct {
+      border-color: #4CAF50;
+      background-color: #e8f5e9;
+    }
+
+    .answer-area input.incorrect {
+      border-color: #e74c3c;
+      background-color: #fdecea;
+    }
+
+    .correct-answer-msg {
+      margin-top: 8px;
+      font-size: 1rem;
+      color: #4CAF50;
+      font-weight: 600;
+      min-height: 1.4em;
+    }
+
+    #btn-submit {
+      padding: 10px 36px;
+      background-color: #4b0082;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #btn-submit:hover {
+      background-color: #3a006b;
+    }
+
+    #btn-submit:disabled {
+      background-color: #999;
+      cursor: default;
+    }
+
+    /* ── Progress ─────────────────────────────────── */
+
+    #questionCount {
+      margin: 16px 0 8px 0;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .progress-bar {
+      width: 100%;
+      background-color: #ddd;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    #progressFill {
+      height: 100%;
+      width: 0%;
+      background-color: #9370db;
+      transition: width 0.3s ease;
+    }
+
+    /* ── Score display ────────────────────────────── */
+    .score-display {
+      font-size: 1.3rem;
+      margin: 20px 0;
+      color: #333;
+    }
+  </style>
 </head>
 
 <body>
@@ -18,19 +209,27 @@
   <script src="nav-auth.js"></script>
 
   <div class="assessment-container">
-    <h2 id="skillTitle">Skill:</h2>
-    <p id="question">Loading question...</p>
+    <h2 id="assessmentTitle">Loading...</h2>
+    <p id="skillTitle"></p>
 
-    <div id="choices" class="choices-container"></div>
+    <div class="problem-area" id="problem-area">
+      <!-- Problem rendered here by JS -->
+    </div>
+
+    <div class="answer-area">
+      <input type="text" id="answer-input" inputmode="numeric" placeholder="?" autocomplete="off" />
+      <div class="correct-answer-msg" id="feedback-msg"></div>
+    </div>
+
+    <button id="btn-submit">Submit</button>
 
     <p id="questionCount">Question 0 of 0</p>
-
     <div class="progress-bar">
-      <div id="progressFill" class="progress-fill"></div>
+      <div id="progressFill"></div>
     </div>
   </div>
 
-  <!-- ✅ Your main script goes second -->
+  <script src="questions.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
