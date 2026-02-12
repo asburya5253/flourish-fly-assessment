@@ -180,6 +180,88 @@
     .back-link:hover {
       text-decoration: underline;
     }
+
+    /* --- Action Bar --- */
+    .action-bar {
+      max-width: 900px;
+      margin: 0 auto 20px auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .btn-print {
+      background-color: #9370db;
+      color: white;
+    }
+
+    .btn-download {
+      background-color: #4b0082;
+      color: white;
+    }
+
+    /* --- Print Styles --- */
+    @media print {
+      nav, .action-bar, .back-link {
+        display: none !important;
+      }
+
+      body {
+        background-color: white;
+        padding-top: 0;
+      }
+
+      h1 {
+        margin: 10px 0 20px 0;
+        font-size: 2rem;
+      }
+
+      .student-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        break-inside: avoid;
+        margin-bottom: 16px;
+        padding: 16px 20px;
+      }
+
+      .percent-fill {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .mastery-badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .skill-table thead {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .skill-table tbody tr:hover {
+        background-color: transparent;
+      }
+    }
   </style>
 </head>
 <body>
@@ -193,6 +275,11 @@
   <script src="nav-auth.js"></script>
 
   <h1>Assessment Reports</h1>
+
+  <div class="action-bar" id="action-bar" style="display:none;">
+    <button class="action-btn btn-download" onclick="downloadCSV()">&#128229; Download CSV</button>
+    <button class="action-btn btn-print" onclick="window.print()">&#128424; Print</button>
+  </div>
 
   <div class="reports-wrapper" id="reports-wrapper">
     <!-- Populated by JS: one student card per student/topic -->

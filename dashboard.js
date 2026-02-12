@@ -197,6 +197,57 @@ function buildEmptyState() {
   return el;
 }
 
+// ── CSV Download ─────────────────────────────────────────
+
+function downloadCSV() {
+  var reportData = getReportData();
+  var rows = [["Student", "Topic", "Score", "Total", "Percent", "Mastery", "Sub-Skill", "Correct", "Skill Total"]];
+
+  reportData.forEach(function (student) {
+    student.results.forEach(function (result) {
+      var skills = (result.answers && result.answers.length > 0) ? groupBySkill(result.answers) : [];
+
+      if (skills.length === 0) {
+        rows.push([
+          student.studentName, getTopicTitle(result.topic),
+          result.score, result.total, result.percent + "%", result.mastery,
+          "", "", ""
+        ]);
+      } else {
+        skills.forEach(function (s, i) {
+          rows.push([
+            i === 0 ? student.studentName : "",
+            i === 0 ? getTopicTitle(result.topic) : "",
+            i === 0 ? result.score : "",
+            i === 0 ? result.total : "",
+            i === 0 ? result.percent + "%" : "",
+            i === 0 ? result.mastery : "",
+            s.skill, s.correct, s.total
+          ]);
+        });
+      }
+    });
+  });
+
+  var csvContent = rows.map(function (row) {
+    return row.map(function (cell) {
+      var str = String(cell);
+      if (str.indexOf(",") !== -1 || str.indexOf('"') !== -1) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }).join(",");
+  }).join("\n");
+
+  var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement("a");
+  link.href = url;
+  link.download = "assessment-reports.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Main Render ──────────────────────────────────────────
 
 function renderReports() {
@@ -209,6 +260,10 @@ function renderReports() {
     wrapper.appendChild(buildEmptyState());
     return;
   }
+
+  // Show action bar when there are results
+  var actionBar = document.getElementById("action-bar");
+  if (actionBar) actionBar.style.display = "flex";
 
   reportData.forEach(function (student) {
     student.results.forEach(function (result) {
