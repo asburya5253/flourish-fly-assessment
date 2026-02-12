@@ -183,6 +183,30 @@
       background-color: #aa1111;
     }
 
+    /* Inline editing selects/inputs in roster table */
+    td select, td input[type="text"] {
+      padding: 4px 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 24px 0;
+      color: #0077cc;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
     .empty-msg {
       text-align: center;
       color: #999;
@@ -208,7 +232,6 @@
     <a href="teacher-login.html">Teacher Login</a>
     <a href="teacher-signup.html">Teacher Sign Up</a>
     <a href="teacher-dashboard.html">Dashboard</a>
-    <a href="class-roster.html">Class Roster</a>
   </nav>
 
   <h1>Class Roster</h1>
@@ -220,7 +243,7 @@
       <h2>Upload Spreadsheet</h2>
       <div class="upload-area" id="upload-area">
         <strong>Click to upload a CSV file</strong>
-        <p>Columns: First Name, Last Name, Grade Level, Math Level, Class Period (optional)</p>
+        <p>Only First Name and Last Name columns are required. Grade level, math level, and class period can be set after import.</p>
         <input type="file" id="file-input" accept=".csv" />
       </div>
       <div id="upload-status"></div>
@@ -306,6 +329,8 @@
     </div>
 
   </div>
+
+  <a class="back-link" href="teacher-dashboard.html">Back to Dashboard</a>
 
   <script src="class-roster.js"></script>
 </body>

@@ -5,63 +5,67 @@
   <title>Teacher Dashboard – Flourish & Fly</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
-   body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f0f4f8;
-  margin: 0;
-  padding: 0;
-  padding-top: 60px;   /* space for fixed nav */
-  min-height: 100vh;
-  display: block;      /* remove any flex centering */
-}
-
-h1 {
-  text-align: center;
-  margin: 20px 0 40px 0;
-  color: #4b0082;
-  font-family: 'Brush Script MT', cursive;
-  font-size: 3rem;
-}
-
-table {
-  max-width: 900px;
-  margin: 0 auto;     /* center horizontally */
-  background: white;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  border-radius: 12px;
-  overflow: hidden;
-  border-collapse: collapse;
-}
-
-    thead {
-      background-color: #9370db;
-      color: white;
-      font-weight: bold;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      padding-top: 60px;
+      min-height: 100vh;
+      display: block;
     }
 
-    th, td {
-      padding: 12px 15px;
+    h1 {
       text-align: center;
-      border-bottom: 1px solid #ddd;
+      margin: 20px 0 40px 0;
+      color: #4b0082;
+      font-family: 'Brush Script MT', cursive;
+      font-size: 3rem;
     }
 
-    tbody tr:hover {
-      background-color: #f5f0ff;
+    .dashboard-cards {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 20px;
     }
 
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    a.student-link {
-      color: #0077cc;
+    .dash-card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      padding: 40px 30px;
+      text-align: center;
+      width: 300px;
       text-decoration: none;
-      font-weight: 600;
-      cursor: pointer;
+      color: inherit;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    a.student-link:hover {
-      text-decoration: underline;
+    .dash-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+    }
+
+    .dash-card .card-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .dash-card h2 {
+      margin: 0 0 10px 0;
+      color: #4b0082;
+      font-size: 1.4rem;
+    }
+
+    .dash-card p {
+      color: #666;
+      font-size: 0.95rem;
+      margin: 0;
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -72,26 +76,22 @@ table {
     <a href="teacher-login.html">Teacher Login</a>
     <a href="teacher-signup.html">Teacher Sign Up</a>
     <a href="teacher-dashboard.html">Dashboard</a>
-    <a href="class-roster.html">Class Roster</a>
   </nav>
 
   <h1>Teacher Dashboard</h1>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Student</th>
-        <th>Operations & Algebraic Thinking (OA)</th>
-        <th>Number & Base Ten (NBT)</th>
-        <th>Measurement & Data (MD)</th>
-        <th>Geometry (G)</th>
-      </tr>
-    </thead>
-    <tbody id="student-table-body">
-      <!-- Rows will be populated by JS -->
-    </tbody>
-  </table>
+  <div class="dashboard-cards">
+    <a href="class-roster.html" class="dash-card">
+      <div class="card-icon">&#128203;</div>
+      <h2>Class Roster</h2>
+      <p>Add, edit, or upload your student roster. Manage names, grade levels, and class assignments.</p>
+    </a>
 
-  <script src="dashboard.js"></script>
+    <a href="reporting-grid.html" class="dash-card">
+      <div class="card-icon">&#128202;</div>
+      <h2>Reporting Grid</h2>
+      <p>View student assessment results by domain. See mastery levels across all math standards.</p>
+    </a>
+  </div>
 </body>
 </html>

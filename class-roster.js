@@ -1,5 +1,5 @@
 const ROSTER_KEY = "classRoster";
-const STUDENT_ROSTER_KEY = "studentRoster"; // legacy map used by dashboard
+const STUDENT_ROSTER_KEY = "studentRoster"; // map used by dashboard
 
 const gradeLabels = {
   "K": "Kindergarten", "1": "1st Grade", "2": "2nd Grade",
@@ -8,6 +8,9 @@ const gradeLabels = {
   "9": "9th Grade", "10": "10th Grade", "11": "11th Grade",
   "12": "12th Grade"
 };
+
+const gradeLevelOptions = ["", "K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+const mathLevelOptions = ["", "K", "1", "2", "3", "4", "5", "6", "7", "8"];
 
 // ── Roster helpers ──────────────────────────────────────────
 
@@ -20,24 +23,31 @@ function saveRoster(roster) {
   syncStudentRoster(roster);
 }
 
-// Keep the simple id→name map that the dashboard uses in sync
 function syncStudentRoster(roster) {
-  const map = {};
-  roster.forEach(s => {
-    const id = (s.firstName + "_" + s.lastName).toLowerCase().replace(/\s+/g, "_");
+  var map = {};
+  roster.forEach(function (s) {
+    var id = (s.firstName + "_" + s.lastName).toLowerCase().replace(/\s+/g, "_");
     map[id] = s.firstName + " " + s.lastName;
   });
   localStorage.setItem(STUDENT_ROSTER_KEY, JSON.stringify(map));
 }
 
 function addStudents(students) {
-  const roster = getRoster();
-  students.forEach(s => roster.push(s));
+  var roster = getRoster();
+  students.forEach(function (s) { roster.push(s); });
   saveRoster(roster);
 }
 
+function updateStudent(index, field, value) {
+  var roster = getRoster();
+  if (roster[index]) {
+    roster[index][field] = value;
+    saveRoster(roster);
+  }
+}
+
 function removeStudent(index) {
-  const roster = getRoster();
+  var roster = getRoster();
   roster.splice(index, 1);
   saveRoster(roster);
   renderRoster();
@@ -48,14 +58,32 @@ function clearRoster() {
   renderRoster();
 }
 
+// ── Build dropdown ──────────────────────────────────────────
+
+function buildSelect(options, selectedVal, dataIndex, field) {
+  var sel = document.createElement("select");
+  sel.setAttribute("data-index", dataIndex);
+  sel.setAttribute("data-field", field);
+
+  options.forEach(function (val) {
+    var opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent = val === "" ? "—" : (gradeLabels[val] || val);
+    if (val === selectedVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  return sel;
+}
+
 // ── Render ──────────────────────────────────────────────────
 
 function renderRoster() {
-  const roster = getRoster();
-  const tbody = document.getElementById("roster-body");
-  const emptyMsg = document.getElementById("empty-roster");
-  const clearBtn = document.getElementById("btn-clear-all");
-  const countEl = document.getElementById("roster-count");
+  var roster = getRoster();
+  var tbody = document.getElementById("roster-body");
+  var emptyMsg = document.getElementById("empty-roster");
+  var clearBtn = document.getElementById("btn-clear-all");
+  var countEl = document.getElementById("roster-count");
 
   tbody.innerHTML = "";
 
@@ -70,23 +98,55 @@ function renderRoster() {
   clearBtn.classList.remove("hidden");
   countEl.textContent = roster.length + " student" + (roster.length !== 1 ? "s" : "");
 
-  roster.forEach((s, i) => {
-    const tr = document.createElement("tr");
+  roster.forEach(function (s, i) {
+    var tr = document.createElement("tr");
 
-    tr.innerHTML =
-      "<td>" + escapeHtml(s.firstName) + "</td>" +
-      "<td>" + escapeHtml(s.lastName) + "</td>" +
-      "<td>" + (gradeLabels[s.gradeLevel] || s.gradeLevel) + "</td>" +
-      "<td>" + (gradeLabels[s.mathLevel] || s.mathLevel) + "</td>" +
-      "<td>" + escapeHtml(s.classPeriod || "—") + "</td>" +
-      "<td><button class='btn-remove' data-index='" + i + "'>Remove</button></td>";
+    // First name (text)
+    var tdFirst = document.createElement("td");
+    tdFirst.textContent = s.firstName;
+    tr.appendChild(tdFirst);
+
+    // Last name (text)
+    var tdLast = document.createElement("td");
+    tdLast.textContent = s.lastName;
+    tr.appendChild(tdLast);
+
+    // Grade level (dropdown)
+    var tdGrade = document.createElement("td");
+    tdGrade.appendChild(buildSelect(gradeLevelOptions, s.gradeLevel || "", i, "gradeLevel"));
+    tr.appendChild(tdGrade);
+
+    // Math level (dropdown)
+    var tdMath = document.createElement("td");
+    tdMath.appendChild(buildSelect(mathLevelOptions, s.mathLevel || "", i, "mathLevel"));
+    tr.appendChild(tdMath);
+
+    // Class period (editable text input)
+    var tdClass = document.createElement("td");
+    var classInput = document.createElement("input");
+    classInput.type = "text";
+    classInput.value = s.classPeriod || "";
+    classInput.placeholder = "—";
+    classInput.setAttribute("data-index", i);
+    classInput.setAttribute("data-field", "classPeriod");
+    tdClass.appendChild(classInput);
+    tr.appendChild(tdClass);
+
+    // Remove button
+    var tdRemove = document.createElement("td");
+    var btn = document.createElement("button");
+    btn.className = "btn-remove";
+    btn.setAttribute("data-index", i);
+    btn.textContent = "Remove";
+    tdRemove.appendChild(btn);
+    tr.appendChild(tdRemove);
 
     tbody.appendChild(tr);
   });
 }
 
 function escapeHtml(str) {
-  const div = document.createElement("div");
+  var div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
 }
@@ -94,22 +154,21 @@ function escapeHtml(str) {
 // ── Manual entry ────────────────────────────────────────────
 
 function handleManualAdd() {
-  const firstName = document.getElementById("m-first-name").value.trim();
-  const lastName = document.getElementById("m-last-name").value.trim();
-  const gradeLevel = document.getElementById("m-grade-level").value;
-  const mathLevel = document.getElementById("m-math-level").value;
-  const classPeriod = document.getElementById("m-class-period").value.trim();
-  const status = document.getElementById("manual-status");
+  var firstName = document.getElementById("m-first-name").value.trim();
+  var lastName = document.getElementById("m-last-name").value.trim();
+  var gradeLevel = document.getElementById("m-grade-level").value;
+  var mathLevel = document.getElementById("m-math-level").value;
+  var classPeriod = document.getElementById("m-class-period").value.trim();
+  var status = document.getElementById("manual-status");
 
-  if (!firstName || !lastName || !gradeLevel || !mathLevel) {
-    status.textContent = "Please fill in all required fields.";
+  if (!firstName || !lastName) {
+    status.textContent = "Please enter a first and last name.";
     status.style.color = "red";
     return;
   }
 
-  addStudents([{ firstName, lastName, gradeLevel, mathLevel, classPeriod }]);
+  addStudents([{ firstName: firstName, lastName: lastName, gradeLevel: gradeLevel, mathLevel: mathLevel, classPeriod: classPeriod }]);
 
-  // Reset form
   document.getElementById("m-first-name").value = "";
   document.getElementById("m-last-name").value = "";
   document.getElementById("m-grade-level").selectedIndex = 0;
@@ -125,58 +184,58 @@ function handleManualAdd() {
 // ── CSV upload ──────────────────────────────────────────────
 
 function parseCSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  var lines = text.split(/\r?\n/).filter(function (l) { return l.trim() !== ""; });
   if (lines.length < 2) return { students: [], error: "File is empty or has no data rows." };
 
-  const header = lines[0].split(",").map(h => h.trim().toLowerCase());
+  var header = lines[0].split(",").map(function (h) { return h.trim().toLowerCase(); });
 
-  // Try to find columns by name
-  const firstIdx = header.findIndex(h => h.includes("first"));
-  const lastIdx = header.findIndex(h => h.includes("last"));
-  const gradeIdx = header.findIndex(h => h.includes("grade"));
-  const mathIdx = header.findIndex(h => h.includes("math"));
-  const classIdx = header.findIndex(h => h.includes("class") || h.includes("period"));
+  // Find columns — only first and last name are required
+  var firstIdx = header.findIndex(function (h) { return h.includes("first"); });
+  var lastIdx = header.findIndex(function (h) { return h.includes("last"); });
+  var gradeIdx = header.findIndex(function (h) { return h.includes("grade") && !h.includes("math"); });
+  var mathIdx = header.findIndex(function (h) { return h.includes("math"); });
+  var classIdx = header.findIndex(function (h) { return h.includes("class") || h.includes("period"); });
 
-  if (firstIdx === -1 || lastIdx === -1 || gradeIdx === -1 || mathIdx === -1) {
+  if (firstIdx === -1 || lastIdx === -1) {
     return {
       students: [],
-      error: "Could not find required columns. Please include: First Name, Last Name, Grade Level, Math Level."
+      error: "Could not find required columns. Please include at least: First Name, Last Name."
     };
   }
 
-  const students = [];
-  const errors = [];
+  var students = [];
+  var errors = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map(c => c.trim());
-    const firstName = cols[firstIdx] || "";
-    const lastName = cols[lastIdx] || "";
-    const gradeLevel = cols[gradeIdx] || "";
-    const mathLevel = cols[mathIdx] || "";
-    const classPeriod = classIdx !== -1 ? (cols[classIdx] || "") : "";
+  for (var i = 1; i < lines.length; i++) {
+    var cols = lines[i].split(",").map(function (c) { return c.trim(); });
+    var firstName = cols[firstIdx] || "";
+    var lastName = cols[lastIdx] || "";
+    var gradeLevel = gradeIdx !== -1 ? (cols[gradeIdx] || "") : "";
+    var mathLevel = mathIdx !== -1 ? (cols[mathIdx] || "") : "";
+    var classPeriod = classIdx !== -1 ? (cols[classIdx] || "") : "";
 
     if (!firstName || !lastName) {
       errors.push("Row " + (i + 1) + ": missing name, skipped.");
       continue;
     }
 
-    students.push({ firstName, lastName, gradeLevel, mathLevel, classPeriod });
+    students.push({ firstName: firstName, lastName: lastName, gradeLevel: gradeLevel, mathLevel: mathLevel, classPeriod: classPeriod });
   }
 
-  return { students, errors };
+  return { students: students, errors: errors };
 }
 
 function handleFileUpload(file) {
-  const statusEl = document.getElementById("upload-status");
+  var statusEl = document.getElementById("upload-status");
 
   if (!file || !file.name.endsWith(".csv")) {
     statusEl.innerHTML = "<span class='status-error'>Please upload a .csv file.</span>";
     return;
   }
 
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = function (e) {
-    const result = parseCSV(e.target.result);
+    var result = parseCSV(e.target.result);
 
     if (result.error) {
       statusEl.innerHTML = "<span class='status-error'>" + result.error + "</span>";
@@ -191,7 +250,7 @@ function handleFileUpload(file) {
     addStudents(result.students);
     renderRoster();
 
-    let msg = "<span class='status-success'>" + result.students.length + " student" +
+    var msg = "<span class='status-success'>" + result.students.length + " student" +
       (result.students.length !== 1 ? "s" : "") + " imported!</span>";
 
     if (result.errors.length > 0) {
@@ -212,7 +271,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Manual add button
   document.getElementById("btn-add-student").addEventListener("click", handleManualAdd);
 
-  // Upload area click → open file picker
+  // Upload area click
   document.getElementById("upload-area").addEventListener("click", function () {
     document.getElementById("file-input").click();
   });
@@ -221,15 +280,36 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("file-input").addEventListener("change", function () {
     if (this.files.length > 0) {
       handleFileUpload(this.files[0]);
-      this.value = ""; // allow re-upload of same file
+      this.value = "";
     }
   });
 
-  // Remove buttons (delegated)
-  document.getElementById("roster-body").addEventListener("click", function (e) {
+  // Delegated events on roster table body
+  var rosterBody = document.getElementById("roster-body");
+
+  // Remove buttons
+  rosterBody.addEventListener("click", function (e) {
     if (e.target.classList.contains("btn-remove")) {
-      const idx = parseInt(e.target.getAttribute("data-index"), 10);
+      var idx = parseInt(e.target.getAttribute("data-index"), 10);
       removeStudent(idx);
+    }
+  });
+
+  // Inline select changes (grade level, math level)
+  rosterBody.addEventListener("change", function (e) {
+    if (e.target.tagName === "SELECT") {
+      var idx = parseInt(e.target.getAttribute("data-index"), 10);
+      var field = e.target.getAttribute("data-field");
+      updateStudent(idx, field, e.target.value);
+    }
+  });
+
+  // Inline text input changes (class period) — save on blur
+  rosterBody.addEventListener("focusout", function (e) {
+    if (e.target.tagName === "INPUT" && e.target.type === "text") {
+      var idx = parseInt(e.target.getAttribute("data-index"), 10);
+      var field = e.target.getAttribute("data-field");
+      updateStudent(idx, field, e.target.value.trim());
     }
   });
 
