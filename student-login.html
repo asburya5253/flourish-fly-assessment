@@ -4,6 +4,116 @@
   <meta charset="UTF-8" />
   <title>Student Login</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Confirmation modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .modal-box h2 {
+      color: #4b0082;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-box .student-info {
+      background: #f5f0ff;
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin: 16px 0;
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .modal-box .student-info strong {
+      color: #4b0082;
+    }
+
+    .modal-box .passcode-section {
+      margin-top: 16px;
+    }
+
+    .modal-box .passcode-section label {
+      display: block;
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .modal-box .passcode-section input {
+      padding: 0.7rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      text-align: center;
+      letter-spacing: 4px;
+      width: 140px;
+      font-weight: 600;
+    }
+
+    .modal-box .passcode-error {
+      color: red;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      min-height: 1.2em;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    .modal-buttons button {
+      padding: 0.6rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-confirm {
+      background-color: #4b0082;
+      color: white;
+    }
+
+    .btn-confirm:hover {
+      background-color: #3a006b;
+    }
+
+    .btn-cancel {
+      background-color: #ccc;
+      color: #333;
+    }
+
+    .btn-cancel:hover {
+      background-color: #bbb;
+    }
+  </style>
 </head>
 <body>
   <nav>
@@ -15,19 +125,38 @@
   </nav>
 
   <div class="container">
-    <h2>Enter Access Code</h2>
+    <h2>Enter Your Login ID</h2>
     <form id="login-form">
-      <input type="text" id="access-code" placeholder="Enter your code" required />
-      <button type="submit">Login</button>
+      <input type="text" id="access-code" placeholder="Enter your login ID" required />
+      <button type="submit">Next</button>
     </form>
-    <p id="error-message" class="hidden">Invalid access code. Please try again.</p>
+    <p id="error-message" class="hidden">Login ID not found. Please try again.</p>
 
     <div class="switch-mode">
       Not a student? <a href="index.html">Go back</a>
     </div>
   </div>
 
-  <script src="login.js"></script>
+  <!-- Confirmation modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-box">
+      <h2>Is this you?</h2>
+      <div class="student-info">
+        <div><strong>Name:</strong> <span id="modal-name"></span></div>
+        <div><strong>Grade:</strong> <span id="modal-grade"></span></div>
+      </div>
+      <div class="passcode-section">
+        <label for="passcode-input">Enter your birthday code (MMDD)</label>
+        <input type="text" id="passcode-input" placeholder="0826" maxlength="4" inputmode="numeric" />
+        <div class="passcode-error" id="passcode-error"></div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="btn-not-me">That's not me</button>
+        <button class="btn-confirm" id="btn-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
 
+  <script src="login.js"></script>
 </body>
 </html>

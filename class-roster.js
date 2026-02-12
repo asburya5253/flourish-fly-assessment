@@ -144,6 +144,22 @@ function renderRoster() {
     tdLast.textContent = s.lastName;
     tr.appendChild(tdLast);
 
+    // Birthday
+    var tdBday = document.createElement("td");
+    if (isEditing) {
+      var bdayInput = document.createElement("input");
+      bdayInput.type = "text";
+      bdayInput.value = s.birthday || "";
+      bdayInput.placeholder = "MM/DD";
+      bdayInput.maxLength = 5;
+      bdayInput.setAttribute("data-index", i);
+      bdayInput.setAttribute("data-field", "birthday");
+      tdBday.appendChild(bdayInput);
+    } else {
+      tdBday.textContent = s.birthday || "—";
+    }
+    tr.appendChild(tdBday);
+
     // Grade level
     var tdGrade = document.createElement("td");
     if (isEditing) {
@@ -237,6 +253,7 @@ function handleManualAdd() {
   var lastName = document.getElementById("m-last-name").value.trim();
   var gradeLevel = document.getElementById("m-grade-level").value;
   var mathLevel = document.getElementById("m-math-level").value;
+  var birthday = document.getElementById("m-birthday").value.trim();
   var classPeriod = document.getElementById("m-class-period").value.trim();
   var status = document.getElementById("manual-status");
 
@@ -246,12 +263,13 @@ function handleManualAdd() {
     return;
   }
 
-  addStudents([{ firstName: firstName, lastName: lastName, gradeLevel: gradeLevel, mathLevel: mathLevel, classPeriod: classPeriod }]);
+  addStudents([{ firstName: firstName, lastName: lastName, gradeLevel: gradeLevel, mathLevel: mathLevel, birthday: birthday, classPeriod: classPeriod }]);
 
   document.getElementById("m-first-name").value = "";
   document.getElementById("m-last-name").value = "";
   document.getElementById("m-grade-level").selectedIndex = 0;
   document.getElementById("m-math-level").selectedIndex = 0;
+  document.getElementById("m-birthday").value = "";
   document.getElementById("m-class-period").value = "";
 
   status.textContent = firstName + " " + lastName + " added!";
@@ -273,6 +291,7 @@ function parseCSV(text) {
   var lastIdx = header.findIndex(function (h) { return h.includes("last"); });
   var gradeIdx = header.findIndex(function (h) { return h.includes("grade") && !h.includes("math"); });
   var mathIdx = header.findIndex(function (h) { return h.includes("math"); });
+  var bdayIdx = header.findIndex(function (h) { return h.includes("birth") || h.includes("bday") || h.includes("dob"); });
   var classIdx = header.findIndex(function (h) { return h.includes("class") || h.includes("period"); });
 
   if (firstIdx === -1 || lastIdx === -1) {
@@ -291,6 +310,7 @@ function parseCSV(text) {
     var lastName = cols[lastIdx] || "";
     var gradeLevel = gradeIdx !== -1 ? (cols[gradeIdx] || "") : "";
     var mathLevel = mathIdx !== -1 ? (cols[mathIdx] || "") : "";
+    var birthday = bdayIdx !== -1 ? (cols[bdayIdx] || "") : "";
     var classPeriod = classIdx !== -1 ? (cols[classIdx] || "") : "";
 
     if (!firstName || !lastName) {
@@ -298,7 +318,7 @@ function parseCSV(text) {
       continue;
     }
 
-    students.push({ firstName: firstName, lastName: lastName, gradeLevel: gradeLevel, mathLevel: mathLevel, classPeriod: classPeriod });
+    students.push({ firstName: firstName, lastName: lastName, gradeLevel: gradeLevel, mathLevel: mathLevel, birthday: birthday, classPeriod: classPeriod });
   }
 
   return { students: students, errors: errors };
