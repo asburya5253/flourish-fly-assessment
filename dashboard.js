@@ -1,5 +1,5 @@
 // Flourish & Fly – Assessment Reports
-// Renders student assessment results from localStorage into card-based reports.
+// Matrix-based report: students as rows, questions as columns, sub-skill headers.
 
 // ── Helpers ──────────────────────────────────────────────
 
@@ -10,21 +10,12 @@ function getTopicTitle(topic) {
   return topic.charAt(0).toUpperCase() + topic.slice(1);
 }
 
-function getMasteryClass(mastery) {
+function getMasteryTextClass(mastery) {
   switch (mastery) {
-    case "Mastered":     return "mastery-mastered";
-    case "Needs Review": return "mastery-review";
-    case "Full Reteach": return "mastery-reteach";
-    default:             return "mastery-reteach";
-  }
-}
-
-function getMasteryColor(mastery) {
-  switch (mastery) {
-    case "Mastered":     return "#4CAF50";
-    case "Needs Review": return "#ff9800";
-    case "Full Reteach": return "#e74c3c";
-    default:             return "#e74c3c";
+    case "Mastered":     return "mastery-text-mastered";
+    case "Needs Review": return "mastery-text-review";
+    case "Full Reteach": return "mastery-text-reteach";
+    default:             return "mastery-text-reteach";
   }
 }
 
@@ -58,7 +49,6 @@ function getReportData() {
       topicResults.push(studentMap[studentId][topic]);
     });
 
-    // Sort results by date descending
     topicResults.sort(function (a, b) {
       return new Date(b.date) - new Date(a.date);
     });
@@ -70,7 +60,6 @@ function getReportData() {
     });
   });
 
-  // Sort students alphabetically
   reportData.sort(function (a, b) {
     return a.studentName.localeCompare(b.studentName);
   });
@@ -78,111 +67,179 @@ function getReportData() {
   return reportData;
 }
 
-// ── Sub-skill Grouping ───────────────────────────────────
+// ── Sub-skill Grouping (for questions in the bank) ──────
 
-function groupBySkill(answers) {
-  var skills = [];
-  var seen = {};
+function getSkillGroups(topic) {
+  if (typeof questionBank === "undefined" || !questionBank[topic]) return [];
 
-  answers.forEach(function (a) {
-    if (!seen[a.skill]) {
-      seen[a.skill] = { skill: a.skill, correct: 0, total: 0 };
-      skills.push(seen[a.skill]);
+  var questions = questionBank[topic].questions;
+  var groups = [];
+  var currentSkill = null;
+
+  questions.forEach(function (q) {
+    if (q.skill !== currentSkill) {
+      groups.push({ skill: q.skill, questionIds: [q.id] });
+      currentSkill = q.skill;
+    } else {
+      groups[groups.length - 1].questionIds.push(q.id);
     }
-    seen[a.skill].total++;
-    if (a.correct) seen[a.skill].correct++;
   });
 
-  return skills;
+  return groups;
 }
 
-// ── Card Builder ─────────────────────────────────────────
+function getQuestionsForTopic(topic) {
+  if (typeof questionBank === "undefined" || !questionBank[topic]) return [];
+  return questionBank[topic].questions;
+}
 
-function buildStudentCard(studentName, result) {
-  var card = document.createElement("div");
-  card.className = "student-card";
+// ── Collect available topics from data ───────────────────
 
-  // Header: student name + topic
-  var header = document.createElement("div");
-  header.className = "student-card-header";
+function getAvailableTopics(reportData) {
+  var topicSet = {};
+  reportData.forEach(function (student) {
+    student.results.forEach(function (r) {
+      topicSet[r.topic] = true;
+    });
+  });
+  return Object.keys(topicSet);
+}
 
-  var nameEl = document.createElement("span");
-  nameEl.className = "student-name";
-  nameEl.textContent = studentName;
-  header.appendChild(nameEl);
+// ── Matrix Builder ───────────────────────────────────────
 
-  var topicEl = document.createElement("span");
-  topicEl.className = "topic-name";
-  topicEl.textContent = getTopicTitle(result.topic);
-  header.appendChild(topicEl);
+function buildMatrix(students, topic) {
+  var questions = getQuestionsForTopic(topic);
+  var skillGroups = getSkillGroups(topic);
 
-  card.appendChild(header);
+  if (questions.length === 0 || students.length === 0) return null;
 
-  // Score row: "8 / 10" + mastery badge
-  var scoreRow = document.createElement("div");
-  scoreRow.className = "score-info";
+  var scrollWrapper = document.createElement("div");
+  scrollWrapper.className = "matrix-scroll";
 
-  var scoreText = document.createElement("span");
-  scoreText.className = "score-text";
-  scoreText.textContent = result.score + " / " + result.total;
-  scoreRow.appendChild(scoreText);
+  var table = document.createElement("table");
+  table.className = "matrix-table";
 
-  var badge = document.createElement("span");
-  badge.className = "mastery-badge " + getMasteryClass(result.mastery);
-  badge.textContent = result.mastery;
-  scoreRow.appendChild(badge);
+  // ── THEAD ──
+  var thead = document.createElement("thead");
 
-  card.appendChild(scoreRow);
+  // Row 1: Sub-skill names (with colspan)
+  var subskillRow = document.createElement("tr");
+  subskillRow.className = "subskill-row";
 
-  // Progress bar
-  var barContainer = document.createElement("div");
-  barContainer.className = "percent-bar";
+  // Corner cell spans 2 rows
+  var cornerTh = document.createElement("th");
+  cornerTh.rowSpan = 2;
+  cornerTh.textContent = "Student";
+  subskillRow.appendChild(cornerTh);
 
-  var barFill = document.createElement("div");
-  barFill.className = "percent-fill";
-  barFill.style.width = result.percent + "%";
-  barFill.style.backgroundColor = getMasteryColor(result.mastery);
-  barContainer.appendChild(barFill);
+  skillGroups.forEach(function (group) {
+    var th = document.createElement("th");
+    th.colSpan = group.questionIds.length;
+    th.textContent = group.skill;
+    subskillRow.appendChild(th);
+  });
 
-  card.appendChild(barContainer);
+  // Summary headers in sub-skill row
+  var scoreTh = document.createElement("th");
+  scoreTh.rowSpan = 2;
+  scoreTh.textContent = "Score";
+  scoreTh.className = "summary-header";
+  subskillRow.appendChild(scoreTh);
 
-  // Sub-skill breakdown table
-  if (result.answers && result.answers.length > 0) {
-    var skills = groupBySkill(result.answers);
+  var masteryTh = document.createElement("th");
+  masteryTh.rowSpan = 2;
+  masteryTh.textContent = "Mastery";
+  masteryTh.className = "summary-header";
+  subskillRow.appendChild(masteryTh);
 
-    var table = document.createElement("table");
-    table.className = "skill-table";
+  thead.appendChild(subskillRow);
 
-    var thead = document.createElement("thead");
-    thead.innerHTML = "<tr><th>Sub-Skill</th><th>Result</th></tr>";
-    table.appendChild(thead);
+  // Row 2: Question numbers
+  var questionRow = document.createElement("tr");
+  questionRow.className = "question-row";
 
-    var tbody = document.createElement("tbody");
+  questions.forEach(function (q) {
+    var th = document.createElement("th");
+    th.textContent = q.id;
+    questionRow.appendChild(th);
+  });
 
-    skills.forEach(function (s) {
-      var tr = document.createElement("tr");
+  thead.appendChild(questionRow);
+  table.appendChild(thead);
 
-      var skillTd = document.createElement("td");
-      skillTd.textContent = s.skill;
-      tr.appendChild(skillTd);
+  // ── TBODY ──
+  var tbody = document.createElement("tbody");
 
-      var resultTd = document.createElement("td");
-      var allCorrect = (s.correct === s.total);
-      var icon = allCorrect ? "\u2713" : "\u2717";
-      var color = allCorrect ? "#4CAF50" : "#e74c3c";
-      resultTd.style.fontWeight = "700";
-      resultTd.style.color = color;
-      resultTd.textContent = s.correct + "/" + s.total + " " + icon;
-      tr.appendChild(resultTd);
-
-      tbody.appendChild(tr);
+  students.forEach(function (student) {
+    // Find this student's result for the topic
+    var result = null;
+    student.results.forEach(function (r) {
+      if (r.topic === topic) result = r;
     });
 
-    table.appendChild(tbody);
-    card.appendChild(table);
-  }
+    var tr = document.createElement("tr");
 
-  return card;
+    // Student name
+    var nameTd = document.createElement("td");
+    nameTd.className = "student-cell";
+    nameTd.textContent = student.studentName;
+    tr.appendChild(nameTd);
+
+    // Build answer lookup by questionId
+    var answerMap = {};
+    if (result && result.answers) {
+      result.answers.forEach(function (a) {
+        answerMap[a.questionId] = a;
+      });
+    }
+
+    // Question cells
+    questions.forEach(function (q) {
+      var td = document.createElement("td");
+      td.className = "score-cell";
+
+      var answer = answerMap[q.id];
+      if (!result) {
+        td.textContent = "-";
+        td.className += " cell-empty";
+      } else if (answer) {
+        td.textContent = answer.correct ? "1" : "0";
+        td.className += answer.correct ? " cell-correct" : " cell-incorrect";
+      } else {
+        td.textContent = "-";
+        td.className += " cell-empty";
+      }
+
+      tr.appendChild(td);
+    });
+
+    // Score total
+    var scoreTd = document.createElement("td");
+    scoreTd.className = "summary-cell";
+    if (result) {
+      scoreTd.textContent = result.score + "/" + result.total;
+    } else {
+      scoreTd.textContent = "-";
+    }
+    tr.appendChild(scoreTd);
+
+    // Mastery
+    var masteryTd = document.createElement("td");
+    masteryTd.className = "summary-cell";
+    if (result) {
+      masteryTd.textContent = result.mastery;
+      masteryTd.className += " " + getMasteryTextClass(result.mastery);
+    } else {
+      masteryTd.textContent = "-";
+    }
+    tr.appendChild(masteryTd);
+
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  scrollWrapper.appendChild(table);
+  return scrollWrapper;
 }
 
 // ── Empty State ──────────────────────────────────────────
@@ -200,33 +257,62 @@ function buildEmptyState() {
 // ── CSV Download ─────────────────────────────────────────
 
 function downloadCSV() {
+  var topicFilter = document.getElementById("topic-filter");
+  var studentFilter = document.getElementById("student-filter");
+  var topic = topicFilter ? topicFilter.value : null;
+  var studentId = studentFilter ? studentFilter.value : "__all__";
+
   var reportData = getReportData();
-  var rows = [["Student", "Topic", "Score", "Total", "Percent", "Mastery", "Sub-Skill", "Correct", "Skill Total"]];
+  if (!topic) return;
+
+  var questions = getQuestionsForTopic(topic);
+  var skillGroups = getSkillGroups(topic);
+
+  // Header row 1: sub-skill names
+  var headerSkills = [""];
+  skillGroups.forEach(function (group) {
+    headerSkills.push(group.skill);
+    for (var i = 1; i < group.questionIds.length; i++) {
+      headerSkills.push("");
+    }
+  });
+  headerSkills.push("Score", "Mastery");
+
+  // Header row 2: question numbers
+  var headerNums = ["Student"];
+  questions.forEach(function (q) { headerNums.push("Q" + q.id); });
+  headerNums.push("Score", "Mastery");
+
+  var rows = [headerSkills, headerNums];
 
   reportData.forEach(function (student) {
-    student.results.forEach(function (result) {
-      var skills = (result.answers && result.answers.length > 0) ? groupBySkill(result.answers) : [];
+    if (studentId !== "__all__" && student.studentId !== studentId) return;
 
-      if (skills.length === 0) {
-        rows.push([
-          student.studentName, getTopicTitle(result.topic),
-          result.score, result.total, result.percent + "%", result.mastery,
-          "", "", ""
-        ]);
+    var result = null;
+    student.results.forEach(function (r) {
+      if (r.topic === topic) result = r;
+    });
+
+    var row = [student.studentName];
+    var answerMap = {};
+    if (result && result.answers) {
+      result.answers.forEach(function (a) { answerMap[a.questionId] = a; });
+    }
+
+    questions.forEach(function (q) {
+      var answer = answerMap[q.id];
+      if (!result) {
+        row.push("");
+      } else if (answer) {
+        row.push(answer.correct ? 1 : 0);
       } else {
-        skills.forEach(function (s, i) {
-          rows.push([
-            i === 0 ? student.studentName : "",
-            i === 0 ? getTopicTitle(result.topic) : "",
-            i === 0 ? result.score : "",
-            i === 0 ? result.total : "",
-            i === 0 ? result.percent + "%" : "",
-            i === 0 ? result.mastery : "",
-            s.skill, s.correct, s.total
-          ]);
-        });
+        row.push("");
       }
     });
+
+    row.push(result ? result.score + "/" + result.total : "");
+    row.push(result ? result.mastery : "");
+    rows.push(row);
   });
 
   var csvContent = rows.map(function (row) {
@@ -243,34 +329,101 @@ function downloadCSV() {
   var url = URL.createObjectURL(blob);
   var link = document.createElement("a");
   link.href = url;
-  link.download = "assessment-reports.csv";
+  link.download = "assessment-report-" + topic + ".csv";
   link.click();
   URL.revokeObjectURL(url);
 }
 
-// ── Main Render ──────────────────────────────────────────
+// ── Filter Setup ─────────────────────────────────────────
 
-function renderReports() {
+function populateFilters(reportData) {
+  var topicSelect = document.getElementById("topic-filter");
+  var studentSelect = document.getElementById("student-filter");
+  if (!topicSelect || !studentSelect) return;
+
+  // Topics
+  var topics = getAvailableTopics(reportData);
+  topicSelect.innerHTML = "";
+  topics.forEach(function (topic) {
+    var opt = document.createElement("option");
+    opt.value = topic;
+    opt.textContent = getTopicTitle(topic);
+    topicSelect.appendChild(opt);
+  });
+
+  // Students
+  studentSelect.innerHTML = '<option value="__all__">All Students</option>';
+  reportData.forEach(function (student) {
+    var opt = document.createElement("option");
+    opt.value = student.studentId;
+    opt.textContent = student.studentName;
+    studentSelect.appendChild(opt);
+  });
+
+  topicSelect.addEventListener("change", renderMatrix);
+  studentSelect.addEventListener("change", renderMatrix);
+}
+
+// ── Render Matrix ────────────────────────────────────────
+
+function renderMatrix() {
   var wrapper = document.getElementById("reports-wrapper");
   wrapper.innerHTML = "";
 
   var reportData = getReportData();
-
   if (reportData.length === 0) {
     wrapper.appendChild(buildEmptyState());
     return;
   }
 
-  // Show action bar when there are results
+  var topicSelect = document.getElementById("topic-filter");
+  var studentSelect = document.getElementById("student-filter");
+  var topic = topicSelect ? topicSelect.value : null;
+  var studentId = studentSelect ? studentSelect.value : "__all__";
+
+  if (!topic) {
+    wrapper.appendChild(buildEmptyState());
+    return;
+  }
+
+  // Filter students
+  var filteredStudents;
+  if (studentId === "__all__") {
+    filteredStudents = reportData;
+  } else {
+    filteredStudents = reportData.filter(function (s) {
+      return s.studentId === studentId;
+    });
+  }
+
+  var matrix = buildMatrix(filteredStudents, topic);
+  if (matrix) {
+    wrapper.appendChild(matrix);
+  } else {
+    wrapper.appendChild(buildEmptyState());
+  }
+}
+
+// ── Main Entry Point ─────────────────────────────────────
+
+function renderReports() {
+  var reportData = getReportData();
+
+  if (reportData.length === 0) {
+    var wrapper = document.getElementById("reports-wrapper");
+    wrapper.innerHTML = "";
+    wrapper.appendChild(buildEmptyState());
+    return;
+  }
+
+  // Show controls
+  var filterBar = document.getElementById("filter-bar");
   var actionBar = document.getElementById("action-bar");
+  if (filterBar) filterBar.style.display = "flex";
   if (actionBar) actionBar.style.display = "flex";
 
-  reportData.forEach(function (student) {
-    student.results.forEach(function (result) {
-      var card = buildStudentCard(student.studentName, result);
-      wrapper.appendChild(card);
-    });
-  });
+  populateFilters(reportData);
+  renderMatrix();
 }
 
 window.addEventListener("DOMContentLoaded", renderReports);
