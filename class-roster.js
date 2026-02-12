@@ -1,5 +1,5 @@
 const ROSTER_KEY = "classRoster";
-const STUDENT_ROSTER_KEY = "studentRoster"; // map used by dashboard
+const STUDENT_ROSTER_KEY = "studentRoster";
 
 const gradeLabels = {
   "K": "Kindergarten", "1": "1st Grade", "2": "2nd Grade",
@@ -11,6 +11,9 @@ const gradeLabels = {
 
 const gradeLevelOptions = ["", "K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 const mathLevelOptions = ["", "K", "1", "2", "3", "4", "5", "6", "7", "8"];
+
+// Track which row index is currently in edit mode (-1 = none)
+var editingRow = -1;
 
 // ── Roster helpers ──────────────────────────────────────────
 
@@ -38,23 +41,17 @@ function addStudents(students) {
   saveRoster(roster);
 }
 
-function updateStudent(index, field, value) {
-  var roster = getRoster();
-  if (roster[index]) {
-    roster[index][field] = value;
-    saveRoster(roster);
-  }
-}
-
 function removeStudent(index) {
   var roster = getRoster();
   roster.splice(index, 1);
   saveRoster(roster);
+  editingRow = -1;
   renderRoster();
 }
 
 function clearRoster() {
   saveRoster([]);
+  editingRow = -1;
   renderRoster();
 }
 
@@ -74,6 +71,11 @@ function buildSelect(options, selectedVal, dataIndex, field) {
   });
 
   return sel;
+}
+
+function displayValue(val, labelMap) {
+  if (!val) return "—";
+  return labelMap[val] || val;
 }
 
 // ── Render ──────────────────────────────────────────────────
@@ -100,55 +102,103 @@ function renderRoster() {
 
   roster.forEach(function (s, i) {
     var tr = document.createElement("tr");
+    var isEditing = (i === editingRow);
 
-    // First name (text)
+    // First name
     var tdFirst = document.createElement("td");
     tdFirst.textContent = s.firstName;
     tr.appendChild(tdFirst);
 
-    // Last name (text)
+    // Last name
     var tdLast = document.createElement("td");
     tdLast.textContent = s.lastName;
     tr.appendChild(tdLast);
 
-    // Grade level (dropdown)
+    // Grade level
     var tdGrade = document.createElement("td");
-    tdGrade.appendChild(buildSelect(gradeLevelOptions, s.gradeLevel || "", i, "gradeLevel"));
+    if (isEditing) {
+      tdGrade.appendChild(buildSelect(gradeLevelOptions, s.gradeLevel || "", i, "gradeLevel"));
+    } else {
+      tdGrade.textContent = displayValue(s.gradeLevel, gradeLabels);
+    }
     tr.appendChild(tdGrade);
 
-    // Math level (dropdown)
+    // Math level
     var tdMath = document.createElement("td");
-    tdMath.appendChild(buildSelect(mathLevelOptions, s.mathLevel || "", i, "mathLevel"));
+    if (isEditing) {
+      tdMath.appendChild(buildSelect(mathLevelOptions, s.mathLevel || "", i, "mathLevel"));
+    } else {
+      tdMath.textContent = displayValue(s.mathLevel, gradeLabels);
+    }
     tr.appendChild(tdMath);
 
-    // Class period (editable text input)
+    // Class period
     var tdClass = document.createElement("td");
-    var classInput = document.createElement("input");
-    classInput.type = "text";
-    classInput.value = s.classPeriod || "";
-    classInput.placeholder = "—";
-    classInput.setAttribute("data-index", i);
-    classInput.setAttribute("data-field", "classPeriod");
-    tdClass.appendChild(classInput);
+    if (isEditing) {
+      var classInput = document.createElement("input");
+      classInput.type = "text";
+      classInput.value = s.classPeriod || "";
+      classInput.placeholder = "—";
+      classInput.setAttribute("data-index", i);
+      classInput.setAttribute("data-field", "classPeriod");
+      tdClass.appendChild(classInput);
+    } else {
+      tdClass.textContent = s.classPeriod || "—";
+    }
     tr.appendChild(tdClass);
 
-    // Remove button
-    var tdRemove = document.createElement("td");
-    var btn = document.createElement("button");
-    btn.className = "btn-remove";
-    btn.setAttribute("data-index", i);
-    btn.textContent = "Remove";
-    tdRemove.appendChild(btn);
-    tr.appendChild(tdRemove);
+    // Action buttons
+    var tdActions = document.createElement("td");
+    if (isEditing) {
+      var saveBtn = document.createElement("button");
+      saveBtn.className = "btn-save";
+      saveBtn.setAttribute("data-index", i);
+      saveBtn.textContent = "Save";
+      tdActions.appendChild(saveBtn);
+    } else {
+      var editBtn = document.createElement("button");
+      editBtn.className = "btn-edit";
+      editBtn.setAttribute("data-index", i);
+      editBtn.textContent = "Edit";
+      tdActions.appendChild(editBtn);
+    }
+    var removeBtn = document.createElement("button");
+    removeBtn.className = "btn-remove";
+    removeBtn.setAttribute("data-index", i);
+    removeBtn.textContent = "Remove";
+    tdActions.appendChild(removeBtn);
+    tr.appendChild(tdActions);
 
     tbody.appendChild(tr);
   });
 }
 
-function escapeHtml(str) {
-  var div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+// ── Save edits from a row ───────────────────────────────────
+
+function saveRow(index) {
+  var roster = getRoster();
+  if (!roster[index]) return;
+
+  var tbody = document.getElementById("roster-body");
+  var row = tbody.children[index];
+  if (!row) return;
+
+  // Read values from the dropdowns/inputs in the row
+  var selects = row.querySelectorAll("select");
+  selects.forEach(function (sel) {
+    var field = sel.getAttribute("data-field");
+    roster[index][field] = sel.value;
+  });
+
+  var inputs = row.querySelectorAll("input[type='text']");
+  inputs.forEach(function (inp) {
+    var field = inp.getAttribute("data-field");
+    roster[index][field] = inp.value.trim();
+  });
+
+  saveRoster(roster);
+  editingRow = -1;
+  renderRoster();
 }
 
 // ── Manual entry ────────────────────────────────────────────
@@ -178,6 +228,7 @@ function handleManualAdd() {
   status.textContent = firstName + " " + lastName + " added!";
   status.style.color = "green";
 
+  editingRow = -1;
   renderRoster();
 }
 
@@ -189,7 +240,6 @@ function parseCSV(text) {
 
   var header = lines[0].split(",").map(function (h) { return h.trim().toLowerCase(); });
 
-  // Find columns — only first and last name are required
   var firstIdx = header.findIndex(function (h) { return h.includes("first"); });
   var lastIdx = header.findIndex(function (h) { return h.includes("last"); });
   var gradeIdx = header.findIndex(function (h) { return h.includes("grade") && !h.includes("math"); });
@@ -248,6 +298,7 @@ function handleFileUpload(file) {
     }
 
     addStudents(result.students);
+    editingRow = -1;
     renderRoster();
 
     var msg = "<span class='status-success'>" + result.students.length + " student" +
@@ -268,15 +319,12 @@ function handleFileUpload(file) {
 document.addEventListener("DOMContentLoaded", function () {
   renderRoster();
 
-  // Manual add button
   document.getElementById("btn-add-student").addEventListener("click", handleManualAdd);
 
-  // Upload area click
   document.getElementById("upload-area").addEventListener("click", function () {
     document.getElementById("file-input").click();
   });
 
-  // File selected
   document.getElementById("file-input").addEventListener("change", function () {
     if (this.files.length > 0) {
       handleFileUpload(this.files[0]);
@@ -284,36 +332,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Delegated events on roster table body
   var rosterBody = document.getElementById("roster-body");
 
-  // Remove buttons
   rosterBody.addEventListener("click", function (e) {
-    if (e.target.classList.contains("btn-remove")) {
-      var idx = parseInt(e.target.getAttribute("data-index"), 10);
+    var target = e.target;
+    var idx = parseInt(target.getAttribute("data-index"), 10);
+
+    if (target.classList.contains("btn-edit")) {
+      editingRow = idx;
+      renderRoster();
+    } else if (target.classList.contains("btn-save")) {
+      saveRow(idx);
+    } else if (target.classList.contains("btn-remove")) {
       removeStudent(idx);
     }
   });
 
-  // Inline select changes (grade level, math level)
-  rosterBody.addEventListener("change", function (e) {
-    if (e.target.tagName === "SELECT") {
-      var idx = parseInt(e.target.getAttribute("data-index"), 10);
-      var field = e.target.getAttribute("data-field");
-      updateStudent(idx, field, e.target.value);
-    }
-  });
-
-  // Inline text input changes (class period) — save on blur
-  rosterBody.addEventListener("focusout", function (e) {
-    if (e.target.tagName === "INPUT" && e.target.type === "text") {
-      var idx = parseInt(e.target.getAttribute("data-index"), 10);
-      var field = e.target.getAttribute("data-field");
-      updateStudent(idx, field, e.target.value.trim());
-    }
-  });
-
-  // Clear all
   document.getElementById("btn-clear-all").addEventListener("click", function () {
     if (confirm("Remove all students from the roster?")) {
       clearRoster();
