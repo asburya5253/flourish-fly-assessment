@@ -106,18 +106,63 @@ function populateFilters() {
     cb.type = "checkbox";
     cb.value = topic;
     cb.checked = !!topicsWithData[topic]; // pre-check if data exists
+    cb.addEventListener("change", updateGroupByOptions);
     var span = document.createElement("span");
     span.textContent = getTopicTitle(topic);
     lbl.appendChild(cb);
     lbl.appendChild(span);
     container.appendChild(lbl);
   });
+
+  updateGroupByOptions();
+}
+
+// ── Update Group By dropdown based on selected assessments ──
+
+function updateGroupByOptions() {
+  var select = document.getElementById("group-mode");
+  var currentValue = select.value;
+
+  // Get selected assessment topics
+  var checkboxes = document.querySelectorAll("#assessment-options input[type='checkbox']");
+  var selectedTopics = [];
+  checkboxes.forEach(function (cb) {
+    if (cb.checked) selectedTopics.push(cb.value);
+  });
+
+  // Rebuild options
+  select.innerHTML = '<option value="__all__">All Questions</option>';
+
+  selectedTopics.forEach(function (topic) {
+    var skillGroups = getSkillGroups(topic);
+    var topicTitle = getTopicTitle(topic);
+    var hasMultipleTopics = selectedTopics.length > 1;
+
+    skillGroups.forEach(function (sg) {
+      var opt = document.createElement("option");
+      opt.value = topic + "::" + sg.skill;
+      opt.textContent = hasMultipleTopics
+        ? sg.skill + " (" + topicTitle + ")"
+        : sg.skill;
+      select.appendChild(opt);
+    });
+  });
+
+  // Try to restore previous selection
+  var found = false;
+  for (var i = 0; i < select.options.length; i++) {
+    if (select.options[i].value === currentValue) {
+      select.value = currentValue;
+      found = true;
+      break;
+    }
+  }
+  if (!found) select.value = "__all__";
 }
 
 // ── Group Generation Logic ───────────────────────────────
 
-// Both modes produce a unified format:
-// { skills: [{ topic, skill, questionIds }], students: [{ id, name, allAnswers: {topic_qId: bool} }] }
+// Groups use format: { skills: [{ topic, skill, questionIds }], students: [{ id, name, allAnswers }] }
 
 function generateGroups() {
   var periodValue = document.getElementById("period-filter").value;
@@ -158,19 +203,23 @@ function generateGroups() {
     });
   }
 
-  var groups;
-  if (groupMode === "subskill") {
-    groups = generateGroupsBySubSkill(selectedTopics, includedStudents, latestResults, nameMap);
-  } else {
-    groups = generateGroupsByQuestion(selectedTopics, includedStudents, latestResults, nameMap);
+  // Build all groups (one per sub-skill)
+  var groups = buildAllGroups(selectedTopics, includedStudents, latestResults, nameMap);
+
+  // If a specific sub-skill is selected, filter to just that group
+  if (groupMode !== "__all__") {
+    groups = groups.filter(function (g) {
+      var key = g.skills[0].topic + "::" + g.skills[0].skill;
+      return key === groupMode;
+    });
   }
 
   window._lastGroups = groups;
   renderGroups(groups);
 }
 
-// "By Question Number" – one group per sub-skill (original behavior)
-function generateGroupsByQuestion(selectedTopics, includedStudents, latestResults, nameMap) {
+// Build one group per sub-skill across selected topics
+function buildAllGroups(selectedTopics, includedStudents, latestResults, nameMap) {
   var groups = [];
 
   selectedTopics.forEach(function (topic) {
@@ -225,90 +274,6 @@ function generateGroupsByQuestion(selectedTopics, includedStudents, latestResult
   return groups;
 }
 
-// "By Sub-Skill" – cluster students who share the same set of failed sub-skills
-function generateGroupsBySubSkill(selectedTopics, includedStudents, latestResults, nameMap) {
-  // Step 1: Build each student's failed-skill profile
-  var studentProfiles = {};
-
-  Object.keys(includedStudents).forEach(function (studentId) {
-    var failedSkills = [];
-    var allAnswers = {};
-
-    selectedTopics.forEach(function (topic) {
-      var studentResults = latestResults[studentId];
-      if (!studentResults || !studentResults[topic]) return;
-
-      var result = studentResults[topic];
-      if (!result.answers) return;
-
-      var answerMap = {};
-      result.answers.forEach(function (a) {
-        answerMap[a.questionId] = a.correct;
-      });
-
-      var skillGroups = getSkillGroups(topic);
-      skillGroups.forEach(function (sg) {
-        var allCorrect = true;
-        sg.questionIds.forEach(function (qId) {
-          var isCorrect = answerMap[qId];
-          allAnswers[topic + "_" + qId] = isCorrect;
-          if (isCorrect !== true) allCorrect = false;
-        });
-
-        if (!allCorrect) {
-          failedSkills.push({ topic: topic, skill: sg.skill, questionIds: sg.questionIds });
-        }
-      });
-    });
-
-    if (failedSkills.length > 0) {
-      var name = nameMap[studentId] || studentId.replace(/_/g, " ");
-      studentProfiles[studentId] = {
-        id: studentId,
-        name: name,
-        failedSkills: failedSkills,
-        allAnswers: allAnswers
-      };
-    }
-  });
-
-  // Step 2: Cluster students who share the exact same set of failed sub-skills
-  var clusterMap = {};
-
-  Object.keys(studentProfiles).forEach(function (studentId) {
-    var profile = studentProfiles[studentId];
-    var skillLabels = profile.failedSkills.map(function (fs) {
-      return fs.topic + "::" + fs.skill;
-    });
-    skillLabels.sort();
-    var key = skillLabels.join("|");
-
-    if (!clusterMap[key]) {
-      clusterMap[key] = {
-        skills: profile.failedSkills,
-        students: []
-      };
-    }
-    clusterMap[key].students.push(profile);
-  });
-
-  // Step 3: Convert to array sorted by group size (largest first)
-  var groups = [];
-  Object.keys(clusterMap).forEach(function (key) {
-    var cluster = clusterMap[key];
-    cluster.students.sort(function (a, b) {
-      return a.name.localeCompare(b.name);
-    });
-    groups.push(cluster);
-  });
-
-  groups.sort(function (a, b) {
-    return b.students.length - a.students.length;
-  });
-
-  return groups;
-}
-
 // ── Render Groups ────────────────────────────────────────
 
 function renderGroups(groups) {
@@ -342,38 +307,18 @@ function renderGroups(groups) {
   wrapper.appendChild(banner);
 
   // Group cards
-  groups.forEach(function (group, groupIdx) {
+  groups.forEach(function (group) {
     var card = document.createElement("div");
     card.className = "group-card";
 
-    // Build skill list label for header
-    var skillNames = group.skills.map(function (s) { return s.skill; });
-    var uniqueSkillNames = [];
-    var seen = {};
-    skillNames.forEach(function (n) {
-      if (!seen[n]) { uniqueSkillNames.push(n); seen[n] = true; }
-    });
-    var headerLabel = uniqueSkillNames.join(" + ");
-
-    // Collect unique topic labels
-    var topicLabels = [];
-    var seenTopics = {};
-    group.skills.forEach(function (s) {
-      if (!seenTopics[s.topic]) {
-        topicLabels.push(getTopicTitle(s.topic));
-        seenTopics[s.topic] = true;
-      }
-    });
+    var skill = group.skills[0];
 
     // Header
     var header = document.createElement("div");
     header.className = "group-header";
-    var headerTitle = group.skills.length > 1
-      ? 'Group ' + (groupIdx + 1) + ': ' + escapeHTML(headerLabel)
-      : escapeHTML(headerLabel);
     header.innerHTML =
-      '<div><span class="group-skill-name">' + headerTitle + '</span>' +
-      '<span class="group-topic-label"> &mdash; ' + escapeHTML(topicLabels.join(", ")) + '</span></div>' +
+      '<div><span class="group-skill-name">' + escapeHTML(skill.skill) + '</span>' +
+      '<span class="group-topic-label"> &mdash; ' + escapeHTML(getTopicTitle(skill.topic)) + '</span></div>' +
       '<span class="group-count">' + group.students.length + ' student' + (group.students.length !== 1 ? 's' : '') + '</span>';
     card.appendChild(header);
 
@@ -384,49 +329,20 @@ function renderGroups(groups) {
     var table = document.createElement("table");
     table.className = "group-matrix";
 
+    // Thead: Student | Q# | Q# | ...
     var thead = document.createElement("thead");
+    var headRow = document.createElement("tr");
+    var nameTh = document.createElement("th");
+    nameTh.textContent = "Student";
+    headRow.appendChild(nameTh);
 
-    if (group.skills.length > 1) {
-      // Multi-skill: Row 1 = sub-skill names with colspan, Row 2 = question numbers
-      var subskillRow = document.createElement("tr");
-      var cornerTh = document.createElement("th");
-      cornerTh.rowSpan = 2;
-      cornerTh.textContent = "Student";
-      subskillRow.appendChild(cornerTh);
+    skill.questionIds.forEach(function (qId) {
+      var th = document.createElement("th");
+      th.textContent = "Q" + qId;
+      headRow.appendChild(th);
+    });
 
-      group.skills.forEach(function (s) {
-        var th = document.createElement("th");
-        th.colSpan = s.questionIds.length;
-        th.textContent = s.skill;
-        th.style.fontSize = "0.75rem";
-        subskillRow.appendChild(th);
-      });
-      thead.appendChild(subskillRow);
-
-      var qRow = document.createElement("tr");
-      group.skills.forEach(function (s) {
-        s.questionIds.forEach(function (qId) {
-          var th = document.createElement("th");
-          th.textContent = "Q" + qId;
-          qRow.appendChild(th);
-        });
-      });
-      thead.appendChild(qRow);
-    } else {
-      // Single skill: simple header row
-      var headRow = document.createElement("tr");
-      var nameTh = document.createElement("th");
-      nameTh.textContent = "Student";
-      headRow.appendChild(nameTh);
-
-      group.skills[0].questionIds.forEach(function (qId) {
-        var th = document.createElement("th");
-        th.textContent = "Q" + qId;
-        headRow.appendChild(th);
-      });
-      thead.appendChild(headRow);
-    }
-
+    thead.appendChild(headRow);
     table.appendChild(thead);
 
     // Tbody: rows per student
@@ -439,23 +355,21 @@ function renderGroups(groups) {
       nameTd.textContent = student.name;
       tr.appendChild(nameTd);
 
-      group.skills.forEach(function (s) {
-        s.questionIds.forEach(function (qId) {
-          var td = document.createElement("td");
-          var answerKey = s.topic + "_" + qId;
-          var correct = student.allAnswers[answerKey];
-          if (correct === true) {
-            td.textContent = "1";
-            td.className = "cell-correct";
-          } else if (correct === false) {
-            td.textContent = "0";
-            td.className = "cell-incorrect";
-          } else {
-            td.textContent = "-";
-            td.className = "cell-empty";
-          }
-          tr.appendChild(td);
-        });
+      skill.questionIds.forEach(function (qId) {
+        var td = document.createElement("td");
+        var answerKey = skill.topic + "_" + qId;
+        var correct = student.allAnswers[answerKey];
+        if (correct === true) {
+          td.textContent = "1";
+          td.className = "cell-correct";
+        } else if (correct === false) {
+          td.textContent = "0";
+          td.className = "cell-incorrect";
+        } else {
+          td.textContent = "-";
+          td.className = "cell-empty";
+        }
+        tr.appendChild(td);
       });
 
       tbody.appendChild(tr);
@@ -480,34 +394,22 @@ function downloadGroupsCSV() {
   var groups = window._lastGroups;
   if (!groups || groups.length === 0) return;
 
-  var rows = [["Group", "Sub-Skill(s)", "Assessment(s)", "Student", "Questions Missed"]];
+  var rows = [["Sub-Skill", "Assessment", "Student", "Questions Missed"]];
 
-  groups.forEach(function (group, idx) {
-    var skillNames = [];
-    var seenSkill = {};
-    group.skills.forEach(function (s) {
-      if (!seenSkill[s.skill]) { skillNames.push(s.skill); seenSkill[s.skill] = true; }
-    });
-    var topicNames = [];
-    var seenTopic = {};
-    group.skills.forEach(function (s) {
-      if (!seenTopic[s.topic]) { topicNames.push(getTopicTitle(s.topic)); seenTopic[s.topic] = true; }
-    });
+  groups.forEach(function (group) {
+    var skill = group.skills[0];
 
     group.students.forEach(function (student) {
       var missed = [];
-      group.skills.forEach(function (s) {
-        s.questionIds.forEach(function (qId) {
-          var answerKey = s.topic + "_" + qId;
-          if (student.allAnswers[answerKey] !== true) {
-            missed.push(s.skill + " Q" + qId);
-          }
-        });
+      skill.questionIds.forEach(function (qId) {
+        var answerKey = skill.topic + "_" + qId;
+        if (student.allAnswers[answerKey] !== true) {
+          missed.push("Q" + qId);
+        }
       });
       rows.push([
-        "Group " + (idx + 1),
-        skillNames.join(" + "),
-        topicNames.join(", "),
+        skill.skill,
+        getTopicTitle(skill.topic),
         student.name,
         missed.join("; ")
       ]);
