@@ -278,7 +278,9 @@ function buildAllGroups(selectedTopics, includedStudents, latestResults, nameMap
 
 function renderGroups(groups) {
   var wrapper = document.getElementById("results-wrapper");
+  var statsEl = document.getElementById("summary-stats");
   wrapper.innerHTML = "";
+  statsEl.innerHTML = "";
 
   if (groups.length === 0) {
     document.getElementById("action-bar").style.display = "none";
@@ -293,18 +295,15 @@ function renderGroups(groups) {
 
   document.getElementById("action-bar").style.display = "flex";
 
-  // Summary banner
+  // Summary stats (inline in filter panel)
   var totalStudents = {};
   groups.forEach(function (g) {
     g.students.forEach(function (s) { totalStudents[s.id] = true; });
   });
 
-  var banner = document.createElement("div");
-  banner.className = "summary-banner";
-  banner.innerHTML =
-    '<div class="summary-stat"><div class="stat-number">' + groups.length + '</div><div class="stat-label">Reteaching Groups</div></div>' +
-    '<div class="summary-stat"><div class="stat-number">' + Object.keys(totalStudents).length + '</div><div class="stat-label">Students Need Support</div></div>';
-  wrapper.appendChild(banner);
+  statsEl.innerHTML =
+    '<div class="summary-stat"><span class="stat-number">' + groups.length + '</span><span class="stat-label">Groups</span></div>' +
+    '<div class="summary-stat"><span class="stat-number">' + Object.keys(totalStudents).length + '</span><span class="stat-label">Students</span></div>';
 
   // Group cards
   groups.forEach(function (group) {

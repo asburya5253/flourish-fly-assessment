@@ -274,34 +274,38 @@
       color: #bbb;
     }
 
-    /* --- Summary banner --- */
-    .summary-banner {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 20px 28px;
-      margin-bottom: 20px;
+    /* --- Summary stats (inline in filter row) --- */
+    .summary-stats {
+      margin-left: auto;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
       gap: 16px;
     }
 
+    .summary-stats:empty {
+      display: none;
+    }
+
     .summary-stat {
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f5f0ff;
+      border: 2px solid #d1c4e9;
+      border-radius: 8px;
+      padding: 6px 14px;
     }
 
     .summary-stat .stat-number {
-      font-size: 2rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: #4b0082;
     }
 
     .summary-stat .stat-label {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: #666;
-      margin-top: 2px;
+      font-weight: 600;
     }
 
     /* --- No-groups state --- */
@@ -429,6 +433,7 @@
         </select>
       </div>
       <button class="btn-generate" id="btn-generate" onclick="generateGroups()">Generate Groups</button>
+      <div class="summary-stats" id="summary-stats"></div>
     </div>
   </div>
 
