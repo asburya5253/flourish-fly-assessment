@@ -308,6 +308,49 @@
       font-weight: 600;
     }
 
+    /* --- Group card footer --- */
+    .group-footer {
+      padding: 12px 24px;
+      border-top: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-practice {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      background-color: #9370db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: 'Century Gothic', 'Segoe UI', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-practice:hover {
+      background-color: #7b5ec7;
+      transform: translateY(-2px);
+    }
+
+    .btn-practice:disabled {
+      background-color: #ccc;
+      cursor: default;
+      transform: none;
+    }
+
+    .practice-note {
+      font-size: 0.8rem;
+      color: #999;
+      font-style: italic;
+    }
+
     /* --- No-groups state --- */
     .no-groups {
       background: white;

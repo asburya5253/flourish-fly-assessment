@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Practice Resources – Flourish & Fly</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Century Gothic', 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      padding-top: 60px;
+      min-height: 100vh;
+      display: block;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0 24px 0;
+      color: #4b0082;
+      font-family: 'Century Gothic', sans-serif;
+      font-size: 2.4rem;
+      font-weight: bold;
+    }
+
+    /* --- Layout --- */
+    .page-wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* --- Skill Selector --- */
+    .skill-selector {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 20px 28px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .skill-selector label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #4b0082;
+      white-space: nowrap;
+    }
+
+    .skill-selector select {
+      padding: 8px 12px;
+      border: 2px solid #d1c4e9;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: 'Century Gothic', 'Segoe UI', sans-serif;
+      background: white;
+      color: #333;
+      cursor: pointer;
+      min-width: 260px;
+    }
+
+    .skill-selector select:focus {
+      outline: none;
+      border-color: #9370db;
+      box-shadow: 0 0 0 3px rgba(147,112,219,0.2);
+    }
+
+    .skill-count {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: #666;
+      font-weight: 600;
+    }
+
+    /* --- Add Resource Form --- */
+    .add-form {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 20px 28px;
+      margin-bottom: 20px;
+    }
+
+    .add-form h3 {
+      margin: 0 0 16px 0;
+      color: #4b0082;
+      font-size: 1rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .form-field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #666;
+    }
+
+    .form-field input,
+    .form-field select {
+      padding: 8px 12px;
+      border: 2px solid #d1c4e9;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: 'Century Gothic', 'Segoe UI', sans-serif;
+      background: white;
+      color: #333;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus {
+      outline: none;
+      border-color: #9370db;
+      box-shadow: 0 0 0 3px rgba(147,112,219,0.2);
+    }
+
+    .btn-add {
+      padding: 8px 24px;
+      background-color: #4b0082;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'Century Gothic', 'Segoe UI', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-add:hover {
+      background-color: #3a006b;
+      transform: translateY(-2px);
+    }
+
+    /* --- Resource List --- */
+    .resource-list {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .resource-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background-color: #4b0082;
+      color: white;
+    }
+
+    .resource-list-header h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .resource-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.15s;
+    }
+
+    .resource-item:last-child {
+      border-bottom: none;
+    }
+
+    .resource-item:hover {
+      background-color: #f5f0ff;
+    }
+
+    .resource-order {
+      width: 28px;
+      height: 28px;
+      background: #9370db;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .resource-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .resource-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.9rem;
+    }
+
+    .resource-url {
+      font-size: 0.8rem;
+      color: #999;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .resource-url a {
+      color: #0077cc;
+      text-decoration: none;
+    }
+
+    .resource-url a:hover {
+      text-decoration: underline;
+    }
+
+    .resource-type-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .type-worksheet {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .type-link {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .resource-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .resource-actions button {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      background: #f0f0f0;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      padding: 0;
+    }
+
+    .resource-actions button:hover {
+      background: #e0e0e0;
+    }
+
+    .resource-actions .btn-delete:hover {
+      background: #fdecea;
+      color: #c62828;
+    }
+
+    /* --- Empty State --- */
+    .empty-resources {
+      padding: 40px 24px;
+      text-align: center;
+      color: #999;
+      font-size: 0.95rem;
+    }
+
+    /* --- Back link --- */
+    .back-link {
+      display: block;
+      text-align: center;
+      margin: 24px 0;
+      color: #0077cc;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="student-login.html">Student Login</a>
+    <a href="teacher-login.html">Teacher Login</a>
+    <a href="teacher-signup.html">Teacher Sign Up</a>
+    <a href="teacher-dashboard.html">Dashboard</a>
+  </nav>
+  <script src="nav-auth.js"></script>
+
+  <h1>Practice Resources</h1>
+
+  <div class="page-wrapper">
+    <div class="skill-selector">
+      <label for="skill-select">Skill:</label>
+      <select id="skill-select">
+        <option value="">-- Select a skill --</option>
+      </select>
+      <span class="skill-count" id="skill-count"></span>
+    </div>
+
+    <div class="add-form" id="add-form" style="display:none;">
+      <h3>Add Resource</h3>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="res-title">Title</label>
+          <input type="text" id="res-title" placeholder="e.g. Missing Addend Worksheet 1" />
+        </div>
+        <div class="form-field" style="max-width:140px;">
+          <label for="res-type">Type</label>
+          <select id="res-type">
+            <option value="worksheet">Worksheet</option>
+            <option value="link">Link</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="res-url">URL</label>
+          <input type="text" id="res-url" placeholder="https://..." />
+        </div>
+        <button class="btn-add" onclick="addResource()">Add</button>
+      </div>
+    </div>
+
+    <div class="resource-list" id="resource-list" style="display:none;">
+      <div class="resource-list-header">
+        <h3 id="list-header-title">Resources</h3>
+      </div>
+      <div id="resource-items"></div>
+    </div>
+  </div>
+
+  <a class="back-link" href="teacher-dashboard.html">Back to Dashboard</a>
+
+  <script src="questions.js"></script>
+  <script src="practice-resources.js"></script>
+</body>
+</html>

@@ -377,8 +377,120 @@ function renderGroups(groups) {
     table.appendChild(tbody);
     body.appendChild(table);
     card.appendChild(body);
+
+    // Footer with Print Practice button
+    var footer = document.createElement("div");
+    footer.className = "group-footer";
+
+    var practiceResources = getPracticeResources();
+    var skillWorksheets = practiceResources.filter(function (r) {
+      return r.topic === skill.topic && r.skill === skill.skill && r.type === "worksheet";
+    });
+    skillWorksheets.sort(function (a, b) { return a.order - b.order; });
+
+    if (skillWorksheets.length > 0) {
+      var btn = document.createElement("button");
+      btn.className = "btn-practice";
+      btn.innerHTML = "&#128424; Print Practice";
+      btn.setAttribute("data-topic", skill.topic);
+      btn.setAttribute("data-skill", skill.skill);
+      btn.onclick = (function (g, ws) {
+        return function () { printPractice(g, ws); };
+      })(group, skillWorksheets);
+      footer.appendChild(btn);
+
+      var note = document.createElement("span");
+      note.className = "practice-note";
+      note.textContent = skillWorksheets.length + " worksheet" + (skillWorksheets.length !== 1 ? "s" : "") + " available";
+      footer.appendChild(note);
+    } else {
+      var note = document.createElement("span");
+      note.className = "practice-note";
+      note.textContent = "No worksheets added yet \u2014 ";
+      var link = document.createElement("a");
+      link.href = "practice-resources.html";
+      link.textContent = "add resources";
+      link.style.color = "#0077cc";
+      note.appendChild(link);
+      footer.appendChild(note);
+    }
+
+    card.appendChild(footer);
     wrapper.appendChild(card);
   });
+}
+
+// ── Print Practice (auto-advance) ────────────────────────
+
+function getPracticeResources() {
+  return JSON.parse(localStorage.getItem("practiceResources") || "[]");
+}
+
+function getPracticeProgress() {
+  return JSON.parse(localStorage.getItem("practiceProgress") || "[]");
+}
+
+function printPractice(group, worksheets) {
+  var progress = getPracticeProgress();
+  var completionMap = {};
+  progress.forEach(function (p) {
+    completionMap[p.studentId + "::" + p.resourceId] = true;
+  });
+
+  // Build assignment list: for each student, find next unfinished worksheet
+  var assignments = [];
+  group.students.forEach(function (student) {
+    var nextWs = null;
+    for (var i = 0; i < worksheets.length; i++) {
+      if (!completionMap[student.id + "::" + worksheets[i].id]) {
+        nextWs = worksheets[i];
+        break;
+      }
+    }
+    assignments.push({
+      name: student.name,
+      worksheet: nextWs
+    });
+  });
+
+  // Open print window
+  var win = window.open("", "_blank");
+  var html = '<!DOCTYPE html><html><head><title>Practice Assignments</title>' +
+    '<style>' +
+    'body{font-family:"Century Gothic","Segoe UI",sans-serif;padding:30px;color:#333;}' +
+    'h1{color:#4b0082;font-size:1.6rem;margin-bottom:4px;}' +
+    'h2{color:#666;font-size:1rem;font-weight:400;margin-top:0;margin-bottom:24px;}' +
+    'table{width:100%;border-collapse:collapse;font-size:0.9rem;}' +
+    'th{background:#4b0082;color:white;padding:10px 16px;text-align:left;}' +
+    'td{padding:10px 16px;border-bottom:1px solid #ddd;}' +
+    'tr:nth-child(even){background:#f9f6ff;}' +
+    '.all-done{color:#2e7d32;font-weight:600;}' +
+    '.ws-link{color:#0077cc;}' +
+    '@media print{body{padding:10px;} th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}' +
+    '</style></head><body>';
+
+  html += '<h1>' + escapeHTML(group.skills[0].skill) + ' &mdash; Practice Assignments</h1>';
+  html += '<h2>' + escapeHTML(getTopicTitle(group.skills[0].topic)) + '</h2>';
+
+  html += '<table><thead><tr><th>Student</th><th>Assigned Worksheet</th><th>Link</th></tr></thead><tbody>';
+
+  assignments.forEach(function (a) {
+    html += '<tr><td>' + escapeHTML(a.name) + '</td>';
+    if (a.worksheet) {
+      html += '<td>' + escapeHTML(a.worksheet.title) + '</td>';
+      html += '<td><a class="ws-link" href="' + escapeHTML(a.worksheet.url) + '">' + escapeHTML(a.worksheet.url) + '</a></td>';
+    } else {
+      html += '<td class="all-done" colspan="2">All worksheets completed!</td>';
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  html += '<script>window.print();<\/script>';
+  html += '</body></html>';
+
+  win.document.write(html);
+  win.document.close();
 }
 
 function escapeHTML(str) {
