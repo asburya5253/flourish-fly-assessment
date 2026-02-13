@@ -116,8 +116,12 @@ function populateFilters() {
 
 // ── Group Generation Logic ───────────────────────────────
 
+// Both modes produce a unified format:
+// { skills: [{ topic, skill, questionIds }], students: [{ id, name, allAnswers: {topic_qId: bool} }] }
+
 function generateGroups() {
   var periodValue = document.getElementById("period-filter").value;
+  var groupMode = document.getElementById("group-mode").value;
   var roster = getClassRoster();
   var nameMap = getStudentRoster(); // loginId -> "First Last"
   var latestResults = getLatestResults();
@@ -140,11 +144,9 @@ function generateGroups() {
   // Build set of student loginIds to include based on period filter
   var includedStudents = {};
   if (periodValue === "__all__") {
-    // Include everyone who has results
     roster.forEach(function (s) {
       if (s.loginId) includedStudents[s.loginId] = true;
     });
-    // Also include anyone with results not in roster
     Object.keys(latestResults).forEach(function (sid) {
       includedStudents[sid] = true;
     });
@@ -156,9 +158,77 @@ function generateGroups() {
     });
   }
 
-  // Step 1: For each student, determine which sub-skills they have NOT mastered
-  // across all selected topics. Build a profile of failed skills per student.
-  var studentProfiles = {}; // studentId -> { name, failedSkills: [{ topic, skill, questionIds }], allAnswers: {qId: bool} }
+  var groups;
+  if (groupMode === "subskill") {
+    groups = generateGroupsBySubSkill(selectedTopics, includedStudents, latestResults, nameMap);
+  } else {
+    groups = generateGroupsByQuestion(selectedTopics, includedStudents, latestResults, nameMap);
+  }
+
+  window._lastGroups = groups;
+  renderGroups(groups);
+}
+
+// "By Question Number" – one group per sub-skill (original behavior)
+function generateGroupsByQuestion(selectedTopics, includedStudents, latestResults, nameMap) {
+  var groups = [];
+
+  selectedTopics.forEach(function (topic) {
+    var skillGroups = getSkillGroups(topic);
+
+    skillGroups.forEach(function (sg) {
+      var needsReteach = [];
+
+      Object.keys(includedStudents).forEach(function (studentId) {
+        var studentResults = latestResults[studentId];
+        if (!studentResults || !studentResults[topic]) return;
+
+        var result = studentResults[topic];
+        if (!result.answers) return;
+
+        var answerMap = {};
+        result.answers.forEach(function (a) {
+          answerMap[a.questionId] = a.correct;
+        });
+
+        var allCorrect = true;
+        var allAnswers = {};
+        sg.questionIds.forEach(function (qId) {
+          var isCorrect = answerMap[qId];
+          allAnswers[topic + "_" + qId] = isCorrect;
+          if (isCorrect !== true) allCorrect = false;
+        });
+
+        if (!allCorrect) {
+          var name = nameMap[studentId] || studentId.replace(/_/g, " ");
+          needsReteach.push({
+            id: studentId,
+            name: name,
+            allAnswers: allAnswers
+          });
+        }
+      });
+
+      needsReteach.sort(function (a, b) {
+        return a.name.localeCompare(b.name);
+      });
+
+      if (needsReteach.length > 0) {
+        groups.push({
+          skills: [{ topic: topic, skill: sg.skill, questionIds: sg.questionIds }],
+          students: needsReteach
+        });
+      }
+    });
+  });
+
+  return groups;
+}
+
+// "By Sub-Skill" – cluster students who share the same set of failed sub-skills
+function generateGroupsBySubSkill(selectedTopics, includedStudents, latestResults, nameMap) {
+  // Step 1: Build each student's failed-skill profile
+  var studentProfiles = {};
 
   Object.keys(includedStudents).forEach(function (studentId) {
     var failedSkills = [];
@@ -202,9 +272,8 @@ function generateGroups() {
     }
   });
 
-  // Step 2: Group students who share the exact same set of failed sub-skills.
-  // Build a key from their sorted failed skill labels to cluster them.
-  var clusterMap = {}; // key -> { skills: [...], students: [...] }
+  // Step 2: Cluster students who share the exact same set of failed sub-skills
+  var clusterMap = {};
 
   Object.keys(studentProfiles).forEach(function (studentId) {
     var profile = studentProfiles[studentId];
@@ -237,10 +306,7 @@ function generateGroups() {
     return b.students.length - a.students.length;
   });
 
-  // Store for CSV download
-  window._lastGroups = groups;
-
-  renderGroups(groups);
+  return groups;
 }
 
 // ── Render Groups ────────────────────────────────────────
@@ -302,13 +368,16 @@ function renderGroups(groups) {
     // Header
     var header = document.createElement("div");
     header.className = "group-header";
+    var headerTitle = group.skills.length > 1
+      ? 'Group ' + (groupIdx + 1) + ': ' + escapeHTML(headerLabel)
+      : escapeHTML(headerLabel);
     header.innerHTML =
-      '<div><span class="group-skill-name">Group ' + (groupIdx + 1) + ': ' + escapeHTML(headerLabel) + '</span>' +
+      '<div><span class="group-skill-name">' + headerTitle + '</span>' +
       '<span class="group-topic-label"> &mdash; ' + escapeHTML(topicLabels.join(", ")) + '</span></div>' +
       '<span class="group-count">' + group.students.length + ' student' + (group.students.length !== 1 ? 's' : '') + '</span>';
     card.appendChild(header);
 
-    // Body with mini-matrix: sub-skill headers spanning question columns
+    // Body with mini-matrix
     var body = document.createElement("div");
     body.className = "group-body";
 
@@ -317,32 +386,47 @@ function renderGroups(groups) {
 
     var thead = document.createElement("thead");
 
-    // Row 1: Sub-skill names with colspan
-    var subskillRow = document.createElement("tr");
-    var cornerTh = document.createElement("th");
-    cornerTh.rowSpan = 2;
-    cornerTh.textContent = "Student";
-    subskillRow.appendChild(cornerTh);
+    if (group.skills.length > 1) {
+      // Multi-skill: Row 1 = sub-skill names with colspan, Row 2 = question numbers
+      var subskillRow = document.createElement("tr");
+      var cornerTh = document.createElement("th");
+      cornerTh.rowSpan = 2;
+      cornerTh.textContent = "Student";
+      subskillRow.appendChild(cornerTh);
 
-    group.skills.forEach(function (s) {
-      var th = document.createElement("th");
-      th.colSpan = s.questionIds.length;
-      th.textContent = s.skill;
-      th.style.fontSize = "0.75rem";
-      subskillRow.appendChild(th);
-    });
-    thead.appendChild(subskillRow);
+      group.skills.forEach(function (s) {
+        var th = document.createElement("th");
+        th.colSpan = s.questionIds.length;
+        th.textContent = s.skill;
+        th.style.fontSize = "0.75rem";
+        subskillRow.appendChild(th);
+      });
+      thead.appendChild(subskillRow);
 
-    // Row 2: Question numbers
-    var qRow = document.createElement("tr");
-    group.skills.forEach(function (s) {
-      s.questionIds.forEach(function (qId) {
+      var qRow = document.createElement("tr");
+      group.skills.forEach(function (s) {
+        s.questionIds.forEach(function (qId) {
+          var th = document.createElement("th");
+          th.textContent = "Q" + qId;
+          qRow.appendChild(th);
+        });
+      });
+      thead.appendChild(qRow);
+    } else {
+      // Single skill: simple header row
+      var headRow = document.createElement("tr");
+      var nameTh = document.createElement("th");
+      nameTh.textContent = "Student";
+      headRow.appendChild(nameTh);
+
+      group.skills[0].questionIds.forEach(function (qId) {
         var th = document.createElement("th");
         th.textContent = "Q" + qId;
-        qRow.appendChild(th);
+        headRow.appendChild(th);
       });
-    });
-    thead.appendChild(qRow);
+      thead.appendChild(headRow);
+    }
+
     table.appendChild(thead);
 
     // Tbody: rows per student
@@ -396,7 +480,7 @@ function downloadGroupsCSV() {
   var groups = window._lastGroups;
   if (!groups || groups.length === 0) return;
 
-  var rows = [["Group", "Sub-Skills Needing Reteach", "Assessment(s)", "Student", "Questions Missed"]];
+  var rows = [["Group", "Sub-Skill(s)", "Assessment(s)", "Student", "Questions Missed"]];
 
   groups.forEach(function (group, idx) {
     var skillNames = [];
