@@ -70,6 +70,10 @@ function showQuestion() {
     renderHorizontal(q, op);
   } else if (q.type === "missing-addend") {
     renderMissingAddend(q, op);
+  } else if (q.type === "missing-subtrahend") {
+    renderMissingSubtrahend(q, op);
+  } else if (q.type === "missing-minuend") {
+    renderMissingMinuend(q, op);
   } else if (q.type === "vertical") {
     renderVertical(q, op);
   }
@@ -88,6 +92,20 @@ function renderHorizontal(q, op) {
 function renderMissingAddend(q, op) {
   var html = '<div class="problem-horizontal">';
   html += formatNumber(q.left) + " " + op + " <span class=\"blank\">&nbsp;</span> = " + formatNumber(q.sum);
+  html += "</div>";
+  problemArea.innerHTML = html;
+}
+
+function renderMissingSubtrahend(q, op) {
+  var html = '<div class="problem-horizontal">';
+  html += formatNumber(q.left) + " " + op + " <span class=\"blank\">&nbsp;</span> = " + formatNumber(q.difference);
+  html += "</div>";
+  problemArea.innerHTML = html;
+}
+
+function renderMissingMinuend(q, op) {
+  var html = '<div class="problem-horizontal">';
+  html += "<span class=\"blank\">&nbsp;</span> " + op + " " + formatNumber(q.right) + " = " + formatNumber(q.difference);
   html += "</div>";
   problemArea.innerHTML = html;
 }

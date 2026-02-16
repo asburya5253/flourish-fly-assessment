@@ -104,6 +104,39 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem("studentRoster", JSON.stringify(rosterMap));
 
     modal.classList.remove("active");
-    window.location.href = "assessment.html";
+    showTopicPicker();
+  }
+
+  function showTopicPicker() {
+    var topicModal = document.getElementById("topic-modal");
+    var container = document.getElementById("topic-choices");
+    container.innerHTML = "";
+
+    if (typeof questionBank === "undefined") {
+      window.location.href = "assessment.html";
+      return;
+    }
+
+    var topics = Object.keys(questionBank);
+    if (topics.length === 1) {
+      window.location.href = "assessment.html?topic=" + topics[0];
+      return;
+    }
+
+    topics.forEach(function (topic) {
+      var bank = questionBank[topic];
+      var btn = document.createElement("button");
+      btn.className = "btn-confirm";
+      btn.style.padding = "14px 24px";
+      btn.style.fontSize = "1.05rem";
+      btn.style.width = "100%";
+      btn.textContent = bank.title;
+      btn.addEventListener("click", function () {
+        window.location.href = "assessment.html?topic=" + topic;
+      });
+      container.appendChild(btn);
+    });
+
+    topicModal.classList.add("active");
   }
 });
